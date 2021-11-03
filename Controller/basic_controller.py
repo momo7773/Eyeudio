@@ -1,10 +1,10 @@
 
 class Controller(object):
-    def __init__():
+    def __init__(self):
         pass
 
-    def start():
+    def start(self):
         pass
 
-    def stop():
+    def stop(self):
         pass

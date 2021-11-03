@@ -1,11 +1,11 @@
 class Eye_Controller(Controller):
-    def __init__():
+    def __init__(self):
         self.input = None
         self.process = None
         self.model = #initialize model
         self.cursor_controller = None
 
-    def start():
+    def start(self):
         if self.input == None:
             self.input =
         if self.process == None:

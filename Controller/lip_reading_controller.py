@@ -1,5 +1,5 @@
 class Lip_Reading_Controller(Controller):
-    def __init__():
+    def __init__(self):
         #may include multiple input and process(image & voice)
         self.input = None
         self.process = None
@@ -7,7 +7,7 @@ class Lip_Reading_Controller(Controller):
         self.checker = #initialize Syntax_Check
         self.executor = #initialize executor
 
-    def start():
+    def start(self):
         if self.input == None:
             self.input =
         if self.process == None:

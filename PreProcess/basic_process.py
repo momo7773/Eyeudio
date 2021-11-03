@@ -1,5 +1,5 @@
 class Process(Object):
-    def __init__():
+    def __init__(self):
         pass
-    def process():
+    def process(self):
         pass
