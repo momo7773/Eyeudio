@@ -1,13 +1,15 @@
 import numpy as np
 import cv2
 
+number_of_frames = 3
 class Image_Input(Input):
     def __init__(self):
         pass
 
     def get_frames(self):
         cap = cv2.VideoCapture(0)
-        while(True):
+        counter = 0
+        while(counter < number_of_frames):
             # Capture frame-by-frame
             ret, frame = cap.read()
 
@@ -22,6 +24,7 @@ class Image_Input(Input):
             cv2.waitKey(3000)
             if cv2.waitKey(1000) & 0xFF == ord('q'):
                 break
+            counter++
 
         # When everything done, release the capture
         cap.release()
