@@ -1,0 +1,2 @@
+# Ignore photos that we ProcessFrame.py outputs
+*.png
