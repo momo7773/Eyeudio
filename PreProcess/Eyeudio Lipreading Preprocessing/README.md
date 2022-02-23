@@ -1,12 +1,14 @@
 # How to run:
-1) Install packages using conda
-conda env create -f environment.yml
+1. Install packages using conda
+conda env create -f environmentALL.yml
 
-2) Ensure environment is now activated and installed properly
+    - note: environment.yml contains just the necessary packages **without** installing dependencies. environmentALL.yml has only been tested on Windows so far.
+
+2. Ensure environment is now activated and installed properly
 conda activate lipenv
 conda env list
 
-3) Run lip preprocessing
+3. Run lip preprocessing
 python RecordVideoAndCrop.py
 
 # Commands to originally create the Anaconda package:
