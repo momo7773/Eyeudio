@@ -7,6 +7,10 @@ from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 
+from threading import Thread, Lock
+from time import sleep
+
+
 # Load template file
 Builder.load_file('template_gui.kv')
 
@@ -17,9 +21,6 @@ Window.size = (800, 500) # Window size (x, y)
 class EyeudioGUI(Widget):
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
-        self.eye_on = False # Status of Eye Tracking       (ON/OFF)
-        self.lip_on = False # Status of Lip Reading        (ON/OFF)
-        self.aux_on = True  # Status of Speech Recognition (ON/OFF)
 
     def _open_popup(self):
         pop = Popup(title='Eyeudio',
@@ -28,29 +29,31 @@ class EyeudioGUI(Widget):
         pop.open()
 
     def _update_button(self, event):
+        global status
         self.event = event
         if self.event == "click_eye_btn":
-            if self.eye_on:
+            if status["eye_on"]:
                 self.ids.eye_btn.text = "OFF"
-                self.eye_on = False
+                status["eye_on"] = False
             else:
                 self.ids.eye_btn.text = "ON"
-                self.eye_on = True
+                status["eye_on"] = True
+
         elif self.event == "click_lip_btn":
-            if self.lip_on:
+            if status["lip_on"]:
                 self.ids.lip_btn.text = "OFF"
-                self.lip_on = False
+                status["lip_on"] = False
             else:
                 self.ids.lip_btn.text = "ON"
-                self.lip_on = True
+                status["lip_on"] = True
+
         elif self.event == "click_aux_btn":    
-            if self.aux_on:
+            if status["aux_on"]:
                 self.ids.aux_btn.text = "OFF"
-                self.aux_on = False
+                status["aux_on"] = False
             else:
                 self.ids.aux_btn.text = "ON"
-                self.aux_on = True
-
+                status["aux_on"] = True
 
 class Application(App):
     def build(self):
@@ -58,4 +61,30 @@ class Application(App):
 
 
 if __name__ == "__main__":
-    Application().run()
+    status = {
+        "eye_on": False,
+        "lip_on": False,
+        "aux_on": True
+    }
+
+    def printOne():
+        global status
+        while True:
+            if status["eye_on"]:
+                print("Eye on")
+                sleep(1)
+
+    def printTwo():
+        global status
+        while True:
+            if status["aux_on"]:
+                print("Aux on")
+                sleep(1)
+
+    t1 = Thread(target=printOne, args=())
+    t2 = Thread(target=printTwo, args=())
+    t1.start()
+    t2.start()
+
+    app = Application()
+    app.run()
