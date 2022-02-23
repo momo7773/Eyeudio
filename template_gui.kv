@@ -1,0 +1,118 @@
+<EyeudioGUI>
+    BoxLayout:
+        orientation: "horizontal"
+        size: root.width, root.height
+
+        GridLayout:
+            cols: 5
+            padding: [1,1,1,1]
+
+            GridLayout:
+                rows: 4 # Add more rows
+                size_hint_x: None
+                width: 150
+                Label:
+                    text: "Info"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 100
+                Label:
+                    text: "Some info here"
+                    font_size: 16
+                Button:
+                    text: "More Info"
+                    font_size: 16
+                    size_hint_y: None
+                    height: 100
+                    on_release:
+                        root._open_popup()
+
+            GridLayout:
+                rows: 6 # Add more rows
+                Label:
+                    text: "Eye Tracking"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 100
+                Label:
+                    text: "Status:"
+                    font_size: 16
+                    color: (1,0,0,1)
+                Label:
+                    text: "Disabled/Ready"
+                    font_size: 16
+                Label:
+                    text: "Cursor Location:"
+                    font_size: 16
+                    color: (1,0,0,1)
+                Label:
+                    text: "(x:10, y:50)"
+                    font_size: 10
+                Button:
+                    id: eye_btn
+                    text: "OFF"
+                    font_size: 30
+                    size_hint_y: None
+                    height: 100
+                    on_release:
+                        root._update_button(event="click_eye_btn")
+
+            GridLayout:
+                rows: 6 # Add more rows
+                Label:
+                    text: "Lip Reading"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 100
+                Label:
+                    text: "Status:"
+                    font_size: 16
+                    color: (1,0,0,1)
+                Label:
+                    text: "Disabled/Ready"
+                    font_size: 16
+                Label:
+                    text: "Command Log:"
+                    font_size: 16
+                    color: (1,0,0,1)
+                Label:
+                    text: "Command 1\nCommand 2"
+                    font_size: 10
+                Button:
+                    id: lip_btn
+                    text: "OFF"
+                    font_size: 30
+                    size_hint_y: None
+                    height: 100
+                    on_release:
+                        root._update_button(event="click_lip_btn")
+
+            GridLayout:
+                rows: 6 # Add more rows
+                Label:
+                    text: "Speech Recognition"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 100
+                Label:
+                    text: "Status:"
+                    font_size: 16
+                    color: (1,0,0,1)
+                Label:
+                    text: "Disabled/Ready"
+                    font_size: 16
+                Label:
+                    text: "Command Log:"
+                    font_size: 16
+                    color: (1,0,0,1)
+                Label:
+                    text: "Command 1\nCommand 2"
+                    font_size: 10
+                Button:
+                    id: aux_btn
+                    text: "ON"
+                    font_size: 30
+                    size_hint_y: None
+                    height: 100
+                    on_release:
+                        root._update_button(event="click_aux_btn")
