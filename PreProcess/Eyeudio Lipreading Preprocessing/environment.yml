@@ -1,0 +1,9 @@
+name: lipenv
+channels:
+  - defaults
+dependencies:
+  - python=3.6.8
+  - sk-video=1.1.10
+  - dlib=19.22.0
+  - opencv=4.5.3
+prefix: C:\Users\JordanLegion\Anaconda3\envs\lipenv
