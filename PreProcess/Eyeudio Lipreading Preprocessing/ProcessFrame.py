@@ -1,5 +1,10 @@
 # Note: must be placed at same level as landmarks.dat
 
+# Credit: largely based on code\lip_tracking\VisualizeLip.py from 
+#         "3D Convolutional Neural Networks for Cross Audio-Visual 
+#         Matching Recognition"
+#         https://github.com/astorfi/lip-reading-deeplearning
+
 import numpy as np
 import cv2
 import dlib
@@ -9,6 +14,8 @@ import pickle
 import argparse
 import os
 import skvideo.io
+
+import time
 
 def process_frame(frame, output_dir, frame_count):
 
