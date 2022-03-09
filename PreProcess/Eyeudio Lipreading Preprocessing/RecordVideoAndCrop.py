@@ -6,32 +6,35 @@
 #         Matching Recognition"
 #         https://github.com/astorfi/lip-reading-deeplearning
 
+from collections import deque
 import os
 import numpy as np
 import cv2 as cv
 import dlib
 import threading
-import queue
+import copy
 
 import time
 
 # Mouth cropping changeable parameters ---------------------------
-predictor_path = 'shape_predictor_68_face_landmarks.dat'
+max_frames_to_hold = 120 # max number of frames to keep track of
 output_dir = "results" # output_dir is put through os.path.join
+predictor_path = 'shape_predictor_68_face_landmarks.dat'
 font = cv.FONT_HERSHEY_SIMPLEX
-width_crop_max = 0
-height_crop_max = 0
+size_of_crops = 80
 
 # global variables
-exitFlag = 0 # for signaling to threads to exit
+g_exit_flag = 0 # for signaling to threads to exit
+g_frame_count = 0 # for labeling output cropped frames
+g_message_to_display = 'Starting...' # for updating the real time feed
+g_output_queue = deque(maxlen=max_frames_to_hold)
 
 class mouth_crop_thread (threading.Thread):
-   def __init__(self, threadID, name, queue, queueLock, mouth_destination_path):
+   def __init__(self, threadID, name, workQueue, mouth_destination_path):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
-        self.queue = queue
-        self.queueLock = queueLock
+        self.workQueue = workQueue
 
         # dlib requirements ------------------------
         self.detector = dlib.get_frontal_face_detector()
@@ -40,23 +43,24 @@ class mouth_crop_thread (threading.Thread):
 
    def run(self):
         print("Starting " + self.name)
-        while not exitFlag:
-            self.queueLock.acquire()
-            if not self.queue.empty():
-                frame, frame_count = self.queue.get()
-                self.queueLock.release()
+        while not g_exit_flag:
+            if (len(self.workQueue) > 0):
+                frame = self.workQueue.popleft()
 
                 # crop and process frame
-                process_frame(frame, frame_count, 
-                    self.detector, self.predictor, self.mouth_destination_path)
-                print("%s processing frame %s" % (self.name, frame_count))
+                process_frame(frame, self.detector, self.predictor, self.mouth_destination_path)
+
+                global g_frame_count
+                print("%s processing frame %s" % (self.name, g_frame_count))
             else:
-                self.queueLock.release()
                 time.sleep(0.1)
         print("Exiting " + self.name)
 
-def process_frame(frame, frame_count, detector, predictor, mouth_destination_path):
-    global width_crop_max, height_crop_max
+def get_copy_of_output_frames():
+    return copy.deepcopy(g_output_queue)
+
+def process_frame(frame, detector, predictor, mouth_destination_path):
+    global g_frame_count, g_message_to_display, g_output_queue
     (h, w, _) = frame.shape
     
     # Detection of the frame
@@ -79,21 +83,19 @@ def process_frame(frame, frame_count, detector, predictor, mouth_destination_pat
             X and Y coordinates are extracted and stored separately.
             """
             X = shape.part(ii)
-            A = (X.x, X.y)
             marks[0, co] = X.x
             marks[1, co] = X.y
             co += 1
 
         # Get the extreme points(top-left & bottom-right)
         X_left, Y_left, X_right, Y_right = [int(np.amin(marks, axis=1)[0]), int(np.amin(marks, axis=1)[1]),
-                                            int(np.amax(marks, axis=1)[0]),
-                                            int(np.amax(marks, axis=1)[1])]
+                                            int(np.amax(marks, axis=1)[0]), int(np.amax(marks, axis=1)[1])]
 
         # Find the center of the mouth.
         X_center = (X_left + X_right) / 2.0
         Y_center = (Y_left + Y_right) / 2.0
 
-        # Make a boarder for cropping.
+        # Make a border for cropping.
         border = 30
         X_left_new = X_left - border
         Y_left_new = Y_left - border
@@ -103,36 +105,27 @@ def process_frame(frame, frame_count, detector, predictor, mouth_destination_pat
         # Width and height for cropping(before and after considering the border).
         width_new = X_right_new - X_left_new
         height_new = Y_right_new - Y_left_new
-        width_current = X_right - X_left
-        height_current = Y_right - Y_left
-
-        # Determine the cropping rectangle dimensions(the main purpose is to have a fixed area).
-        if width_crop_max == 0 and height_crop_max == 0:
-            width_crop_max = width_new
-            height_crop_max = height_new
-        else:
-            width_crop_max += 1.5 * np.maximum(width_current - width_crop_max, 0)
-            height_crop_max += 1.5 * np.maximum(height_current - height_crop_max, 0)
 
         # # # Uncomment if the lip area is desired to be rectangular # # # #
         #########################################################
         # Find the cropping points(top-left and bottom-right).
-        X_left_crop = int(X_center - width_crop_max / 2.0)
-        X_right_crop = int(X_center + width_crop_max / 2.0)
-        Y_left_crop = int(Y_center - height_crop_max / 2.0)
-        Y_right_crop = int(Y_center + height_crop_max / 2.0)
+        # X_left_crop = int(X_center - width_new / 2.0)
+        # X_right_crop = int(X_center + width_new / 2.0)
+        # Y_left_crop = int(Y_center - height_new / 2.0)
+        # Y_right_crop = int(Y_center + height_new / 2.0)
         #########################################################
 
-        # # # # # Uncomment if the lip area is desired to be rectangular # # # #
-        # #######################################
         # # Use this part if the cropped area should look like a square.
-        # crop_length_max = max(width_crop_max, height_crop_max) / 2
-        #
-        # # Find the cropping points(top-left and bottom-right).
-        # X_left_crop = int(X_center - crop_length_max)
-        # X_right_crop = int(X_center + crop_length_max)
-        # Y_left_crop = int(Y_center - crop_length_max)
-        # Y_right_crop = int(Y_center + crop_length_max)
+        # #######################################
+        crop_length_max = max(width_new, height_new) / 2
+        if (size_of_crops != 0):
+            crop_length_max = 80
+        
+        # Find the cropping points(top-left and bottom-right).
+        X_left_crop = int(X_center - crop_length_max)
+        X_right_crop = int(X_center + crop_length_max)
+        Y_left_crop = int(Y_center - crop_length_max)
+        Y_right_crop = int(Y_center + crop_length_max)
         #########################################
 
         if X_left_crop >= 0 and Y_left_crop >= 0 and X_right_crop < w and Y_right_crop < h:
@@ -140,15 +133,25 @@ def process_frame(frame, frame_count, detector, predictor, mouth_destination_pat
 
             # Save the mouth area.
             mouth_gray = cv.cvtColor(mouth, cv.COLOR_RGB2GRAY)
-            cv.imwrite(mouth_destination_path + '/' + 'frame' + '_' + str(frame_count) + '.png', mouth_gray)
 
+            # To a file
+            # cv.imwrite(mouth_destination_path + '/' + 'frame' + '_' + str(g_frame_count) + '.png', mouth_gray)
+
+            # Or to our queue
+            g_output_queue.append(mouth_gray)
+
+            g_frame_count += 1 # increment so we write to a new file name next frame
+            if (g_frame_count >= max_frames_to_hold): # but don't keep more frames than requested
+                g_frame_count = 0
+
+            g_message_to_display = "The cropped mouth is detected ..."
             print("The cropped mouth is detected ...")
         else:
-            cv.putText(frame, 'The full mouth is not detectable. ', (30, 30), font, 1, (0, 255, 255), 2)
+            g_message_to_display = "The full mouth is not detectable. ..."
             print("The full mouth is not detectable. ...")
 
     else:
-        cv.putText(frame, 'Mouth is not detectable. ', (30, 30), font, 1, (0, 0, 255), 2)
+        g_message_to_display = "Mouth is not detectable. ..."
         print("Mouth is not detectable. ...")
 
 def main():
@@ -159,13 +162,12 @@ def main():
         os.makedirs(mouth_destination_path)
 
     # Init threads
-    threadList = ["Thread-1"]
-    workQueue = queue.Queue(30)
-    queueLock = threading.Lock()
+    threadList = ["Thread-1"] # Can add threads by adding to this list
+    workQueue = deque(maxlen=len(threadList)*2)
     threads = []
     threadID = 1
     for tName in threadList:
-        thread = mouth_crop_thread(threadID, tName, workQueue, queueLock, mouth_destination_path)
+        thread = mouth_crop_thread(threadID, tName, workQueue, mouth_destination_path)
         thread.start()
         threads.append(thread)
         threadID += 1
@@ -177,32 +179,24 @@ def main():
         exit()
 
     # Capture frame-by-frame
-    frame_count = 0
     while True:
-
         # Capture frame
         ret, frame = cap.read()
         # if frame is read correctly ret is True
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
-        # Our operations on the frame come here
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+
+        # fill workQueue every frame (if queue has no room, it deletes oldest frame
+        workQueue.append(frame)
+
+        # Add message to real time feed
+        message_color = (0, 0, 255) # red
+        if (g_message_to_display == "The cropped mouth is detected ..."):
+            message_color = (0, 255, 0) # green
+        image = cv.putText(frame, g_message_to_display, (30, 30), font, 1, message_color, 2)
         # Display the resulting frame
-        cv.imshow('frame', gray)
-
-        # fill workQueue every frame
-        data = (frame, frame_count)
-        queueLock.acquire()
-        try:
-            workQueue.put(data, block=False)
-        except Exception as err:
-            frame_count -= 1
-        queueLock.release()
-
-        # increment frame count so we label the output frames accordingly
-        frame_count += 1
-        print(frame_count)
+        cv.imshow('frame', image)
 
         # Press q to exit loop
         if cv.waitKey(1) == ord('q'):
@@ -213,8 +207,8 @@ def main():
     cv.destroyAllWindows()
 
     # Notify threads it's time to exit
-    global exitFlag 
-    exitFlag = 1
+    global g_exit_flag 
+    g_exit_flag = 1
 
     # Wait for all threads to complete
     for t in threads:
