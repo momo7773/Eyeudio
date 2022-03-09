@@ -9,6 +9,7 @@ from kivy.uix.label import Label
 
 from threading import Thread, Lock
 from time import sleep
+from audio import *
 
 
 # Load template file
@@ -47,7 +48,7 @@ class EyeudioGUI(Widget):
                 self.ids.lip_btn.text = "ON"
                 status["lip_on"] = True
 
-        elif self.event == "click_aux_btn":    
+        elif self.event == "click_aux_btn":
             if status["aux_on"]:
                 self.ids.aux_btn.text = "OFF"
                 status["aux_on"] = False
@@ -81,10 +82,11 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
-    t1 = Thread(target=printOne, args=())
-    t2 = Thread(target=printTwo, args=())
+    initialize_audio()
+    t1 = Thread(target=audio_process, args=())
+    #t2 = Thread(target=printTwo, args=())
     t1.start()
-    t2.start()
+    #t2.start()
 
     app = Application()
     app.run()

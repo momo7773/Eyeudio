@@ -1,0 +1,9 @@
+espnet==0.10.6
+espnet_model_zoo==0.1.7
+Kivy==2.0.0
+librosa==0.9.1
+osascript==2020.12.3
+pysndfile==1.4.3
+scipy==1.6.2
+sounddevice==0.4.3
+torch==1.10.2
