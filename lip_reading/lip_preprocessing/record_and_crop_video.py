@@ -154,7 +154,7 @@ def process_frame(frame, detector, predictor, mouth_destination_path):
         g_message_to_display = "Mouth is not detectable. ..."
         print("Mouth is not detectable. ...")
 
-def main():
+def record_and_crop():
     # Make the output directory correct for the OS
     mouth_destination_path = os.path.join(output_dir)
     # Create directory if it doesn't already exist
@@ -216,4 +216,6 @@ def main():
     print("Exiting Main Thread")
 
 if __name__ == "__main__":
-    main()
+    record_and_crop()
+    frames = np.array(get_copy_of_output_frames())
+    print(frames.shape)
