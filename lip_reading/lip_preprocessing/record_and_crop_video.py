@@ -18,8 +18,8 @@ import time
 
 # Mouth cropping changeable parameters ---------------------------
 max_frames_to_hold = 120 # max number of frames to keep track of
-output_dir = "results" # output_dir is put through os.path.join
-predictor_path = 'shape_predictor_68_face_landmarks.dat'
+output_dir = "lip_reading/lip_preprocessing/results" # output_dir is put through os.path.join
+predictor_path = 'lip_reading/lip_preprocessing/shape_predictor_68_face_landmarks.dat'
 font = cv.FONT_HERSHEY_SIMPLEX
 size_of_crops = 80
 

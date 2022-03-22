@@ -1,13 +1,15 @@
-import av
 import numpy as np
 from lip_preprocessing.record_and_crop_video import record_and_crop, get_copy_of_output_frames
 
 
-def load_video_frames(path, maxlen, pad_mode, grayscale):
-    if not path.endswith('.mp4') and not path.endswith('.avi'):
-        path+='.mp4'
-    mat = load_mp4(path, grayscale=grayscale)
-  
+record_and_crop()
+
+def load_video_frames(path, maxlen, pad_mode, grayscale=True):
+    mat = np.array(get_copy_of_output_frames())
+
+    if grayscale:
+        mat = np.expand_dims(mat,axis=3)
+
     mat = mat.astype('float')/255.
   
     if pad_mode:
@@ -16,20 +18,6 @@ def load_video_frames(path, maxlen, pad_mode, grayscale):
         mat = pad_seq(mat, mode = pad_mode, maxlen = maxlen)
   
     return mat
-
-def load_mp4(vid_path, grayscale=True):
-    container = av.open(vid_path)
-  
-    ims = [frame.to_image() for frame in container.decode(video=0)]
-  
-    if grayscale:
-        ims = [im.convert('L') for im in ims ]
-    ims_c = np.array([np.array(im) for im in ims])
-  
-    if grayscale:
-        ims_c = np.expand_dims(ims_c,axis=3)
-  
-    return ims_c
 
 def pad_seq(mat, mode, maxlen):
     dat = np.zeros( ( maxlen ,)  + mat.shape[1:], dtype=mat.dtype )

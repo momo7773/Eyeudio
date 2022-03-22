@@ -27,7 +27,11 @@ graph_dict = {
 }
 
 
-def predict(sess, g, n_batches, chars=None, val_gen=None, tb_writer=None):
+def predict(sess, g, n_batches, chars=None, val_gen=None):
+    '''
+        Take in the recorded video and return the prediction sentence
+    '''
+
     for i in range(n_batches):
         x, y =  val_gen.next()
         if len(x) == 1: x = x[0]
@@ -77,6 +81,10 @@ def predict(sess, g, n_batches, chars=None, val_gen=None, tb_writer=None):
 
 
 def init_models_and_data(istrain):
+    '''
+        Initialize the Deep Lip Reading model and run lip preprocessing to record and crop video
+    '''
+
     print ('Loading data generators')
     val_gen = ListGenerator(data_list=config.data_list)
     val_epoch_size = val_gen.calc_nbatches_per_epoch()
@@ -101,8 +109,10 @@ def init_models_and_data(istrain):
     go_idx = val_gen.label_vectorizer.char_indices[val_gen.label_vectorizer.go_token]
     x_val = tf.compat.v1.placeholder(dtypes_in[0], shape=shapes_in[0])
     prev_shape = list(shapes_out[0])
+
     if config.test_aug_times:
         prev_shape[0] *= config.test_aug_times
+
     prev_ph = tf.compat.v1.placeholder(dtypes_out[0], shape=prev_shape)
     y_ph = tf.compat.v1.placeholder(dtypes_out[0], shape=shapes_out[0])
     y_val = [prev_ph, y_ph]
@@ -124,7 +134,9 @@ def init_models_and_data(istrain):
 
 
 def load_checkpoints(sess, var_scopes = ('encoder', 'decoder', 'dense')):
-
+    '''
+        Load the pretrained model checkpoint
+    '''
     checkpoint_path =  config.lip_model_path
     if checkpoint_path:
         if os.path.isdir(checkpoint_path):
@@ -159,13 +171,16 @@ def load_checkpoints(sess, var_scopes = ('encoder', 'decoder', 'dense')):
 
 
 def start_lip_reading():
+    '''
+        Run Lip Preprocessing and Deep Lip Reading
+    '''
     np.random.seed(config.seed)
     tf.random.set_seed(config.seed)
 
     val_g, val_epoch_size, chars, sess, val_gen = init_models_and_data(istrain=0)
 
     with sess.as_default():
-        pred_sentences, pred_words = predict(sess=sess, g=val_g, n_batches=val_epoch_size, chars=chars, val_gen=val_gen, tb_writer=None)
+        pred_sentences, pred_words = predict(sess=sess, g=val_g, n_batches=val_epoch_size, chars=chars, val_gen=val_gen)
 
     return pred_sentences[0], pred_words[0] # Assume batch size is always 1
 
