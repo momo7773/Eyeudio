@@ -13,16 +13,16 @@ conda activate lip_env_3.7.7
 conda install -c conda-forge opencv=4.5.3 dlib=19.22.0 sk-video=1.1.10
 
 # For Deep Lip Reading
-pip install tensorflow-gpu
-pip install numpy
-pip install av
-pip install editdistance
-pip install configargparse
-pip install six
-pip install moviepy==0.2.3.5
-pip install opencv-python
-pip install imageio-ffmpeg
-pip install tensorflow_addons
+python -m pip install tensorflow-gpu
+python -m pip install numpy
+python -m pip install av
+python -m pip install editdistance
+python -m pip install configargparse
+python -m pip install six
+python -m pip install moviepy==0.2.3.5
+python -m pip install opencv-python
+python -m pip install imageio-ffmpeg
+python -m pip install tensorflow_addons
 ```
 
 **Note:** We need to activate this environment by running `conda activate lip_env_3.7.7` every time opening up a new terminal.

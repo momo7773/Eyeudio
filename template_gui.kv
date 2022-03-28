@@ -1,23 +1,52 @@
+#:import utils kivy.utils
+
 <EyeudioGUI>
     BoxLayout:
         orientation: "horizontal"
         size: root.width, root.height
 
         GridLayout:
+            spacing: 1
+            canvas.before:
+                Color:
+                    rgba: 1,1,1,1
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
             cols: 4
             padding: [1,1,1,1]
 
+            # First column: Info
             GridLayout:
-                rows: 3 # Add more rows
+                canvas.before:
+                    Color:
+                        rgba: 1,1,1,1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                rows: 3 # Add more rows when adding widgets (Label, Button, etc.)
                 size_hint_x: None
                 width: 150
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#003262')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Info"
+                    bold: True
                     font_size: 20
                     size_hint_y: None
                     height: 100
                 Label:
-                    text: "Some info here"
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#C4820E')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "Computer\nCamera\nMicrophone\nSpeaker"
                     font_size: 16
                 Button:
                     text: "More Info"
@@ -27,29 +56,77 @@
                     on_release:
                         root._open_popup()
 
+            # 2nd column: Eye Tracking
             GridLayout:
-                rows: 6 # Add more rows
+                canvas.before:
+                    Color:
+                        rgba: 1,1,1,1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                rows: 6 # Add more rows when adding widgets (Label, Button, etc.)
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#003262')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Eye Tracking"
+                    bold: True
                     font_size: 20
                     size_hint_y: None
                     height: 100
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#DDD5C7')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Status:"
-                    font_size: 16
+                    font_size: 20
                     color: (1,0,0,1)
+                    size_hint_y: None
+                    height: 35
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#DDD5C7')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Disabled/Ready"
                     font_size: 16
+                    color: (0,0,0,1)
+                    size_hint_y: None
+                    height: 35
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#EEEEEE')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Cursor Location:"
-                    font_size: 16
+                    font_size: 20
                     color: (1,0,0,1)
+                    size_hint_y: None
+                    height: 60
                 Label:
-                    text: "(x:10, y:50)"
-                    font_size: 10
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#EEEEEE')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "(x:0, y:0)"
+                    font_size: 16
+                    color: (0,0,0,1)
                 Button:
                     id: eye_btn
+                    background_normal: ''
+                    background_color: utils.get_color_from_hex('#ED4E33') 
                     text: "OFF"
                     font_size: 30
                     size_hint_y: None
@@ -57,29 +134,77 @@
                     on_release:
                         root._update_button(event="click_eye_btn")
 
+            # 3rd column: Lip Reading
             GridLayout:
-                rows: 6 # Add more rows
+                canvas.before:
+                    Color:
+                        rgba: 1,1,1,1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                rows: 6 # Add more rows when adding widgets (Label, Button, etc.)
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#003262')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Lip Reading"
+                    bold: True
                     font_size: 20
                     size_hint_y: None
                     height: 100
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#DDD5C7')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Status:"
-                    font_size: 16
+                    font_size: 20
                     color: (1,0,0,1)
+                    size_hint_y: None
+                    height: 35
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#DDD5C7')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Disabled/Ready"
                     font_size: 16
+                    color: (0,0,0,1)
+                    size_hint_y: None
+                    height: 35
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#EEEEEE')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Command Log:"
-                    font_size: 16
+                    font_size: 20
                     color: (1,0,0,1)
+                    size_hint_y: None
+                    height: 60
                 Label:
-                    text: "Command 1\nCommand 2"
-                    font_size: 10
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#EEEEEE')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "Command 1"
+                    font_size: 16
+                    color: (0,0,0,1)
                 Button:
                     id: lip_btn
+                    background_normal: ''
+                    background_color: utils.get_color_from_hex('#ED4E33')
                     text: "OFF"
                     font_size: 30
                     size_hint_y: None
@@ -87,29 +212,77 @@
                     on_release:
                         root._update_button(event="click_lip_btn")
 
+            # 4th column: Speech Recognition
             GridLayout:
-                rows: 6 # Add more rows
+                canvas.before:
+                    Color:
+                        rgba: 1,1,1,1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                rows: 6 # Add more rows when adding widgets (Label, Button, etc.)
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#003262')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Speech Recognition"
+                    bold: True
                     font_size: 20
                     size_hint_y: None
                     height: 100
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#DDD5C7')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Status:"
-                    font_size: 16
+                    font_size: 20
                     color: (1,0,0,1)
+                    size_hint_y: None
+                    height: 35
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#DDD5C7')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Disabled/Ready"
                     font_size: 16
+                    color: (0,0,0,1)
+                    size_hint_y: None
+                    height: 35
                 Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#EEEEEE')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
                     text: "Command Log:"
-                    font_size: 16
+                    font_size: 20
                     color: (1,0,0,1)
+                    size_hint_y: None
+                    height: 60
                 Label:
-                    text: "Command 1\nCommand 2"
-                    font_size: 10
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#EEEEEE')
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "Command 1"
+                    font_size: 16
+                    color: (0,0,0,1)
                 Button:
                     id: aux_btn
+                    background_normal: ''
+                    background_color: utils.get_color_from_hex('#00A598')
                     text: "ON"
                     font_size: 30
                     size_hint_y: None
