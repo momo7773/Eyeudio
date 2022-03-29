@@ -35,8 +35,8 @@ python -m pip install tensorflow_addons
 ### Step 4 (Optional): Ensure Lip Reading code is running properly
 Run the entire Lip Reading module
 ```bash
-cd Eyeudio/
-python start_lip_reading.py --lip_model_path models/lrs2_lip_model --data_path media/ --data_list media/demo_list.txt --graph_type infer
+cd Eyeudio/lip_reading/
+python start_lip_reading.py --lip_model_path models/lrs2_lip_model --data_path media/ --data_list media/demo_list.txt
 ```
 
 Run the Lip Preprocessing only
@@ -51,6 +51,11 @@ from lip_reading.start_lip_reading import start_lip_reading
 
 # Then run or call in a thread
 start_lip_reading()
+```
+or
+```bash
+cd Eyeudio/
+python start_lip_reading.py
 ```
 
 ## Module Dependency Tree:
