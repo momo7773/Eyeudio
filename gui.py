@@ -6,7 +6,7 @@ from kivy.core.window import Window
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-
+from multiprocessing import Process, Queue
 from threading import Thread, Lock
 from time import sleep
 from audio import *
@@ -67,6 +67,8 @@ if __name__ == "__main__":
         "lip_on": False,
         "aux_on": True
     }
+    root_widget = None
+    q = Queue()
 
     def printOne():
         global status
@@ -82,11 +84,6 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
-    initialize_audio()
-    t1 = Thread(target=audio_process, args=())
-    #t2 = Thread(target=printTwo, args=())
-    t1.start()
-    #t2.start()
-
+    audio = Audio(q, None).start()
     app = Application()
     app.run()

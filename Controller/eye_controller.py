@@ -2,16 +2,16 @@ class Eye_Controller(Controller):
     def __init__(self):
         self.input = None
         self.process = None
-        self.model = #initialize model
+        # self.model = #initialize model
         self.cursor_controller = None
 
     def start(self):
-        if self.input == None:
-            self.input =
-        if self.process == None:
-            self.process =
-        if self.cursor_controller == None:
-            self.cursor_controller =
+        # if self.input == None:
+        #     self.input =
+        # if self.process == None:
+        #     self.process =
+        # if self.cursor_controller == None:
+        #     self.cursor_controller =
 
         # way of proceessing
         while(True):

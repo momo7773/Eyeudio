@@ -8,6 +8,10 @@ import osascript
 import sounddevice as sd
 import librosa
 import subprocess
+import threading
+import queue
+import pyautogui
+import keyboard
 from scipy.io.wavfile import write
 
 class Node(object):
@@ -88,6 +92,11 @@ class Tree(object):
                 return True, temp, ' '.join(command_words[i+1:])
             return True, temp, None
 
+def click():
+    pyautogui.click()
+
+def move_click(x, y):
+    pyautogui.click(x=x, y=y)
 
 def turn_up_volume():
     code, out, err = osascript.run("output volume of (get volume settings)")
@@ -122,49 +131,100 @@ def set_volume(values):
     code, out, err = osascript.run("output volume of (get volume settings)")
     print(out)
 
+
 def text_normalizer(text):
     text = text.upper()
     return text.translate(str.maketrans('', '', string.punctuation))
 
-def audio_process():
-    global audio_start_flag
-    test_tree = Tree()
-    for command in command_list:
-        test_tree.add_command(command)
-    while True:
-        fs = 44100  # Sample rate
-        seconds = 5  # Duration of recording
-        audio = 'output.wav'
+class Audio(threading.Thread):
+    def __init__(self, q, other_arg, *args, **kwargs):
+        self.queue = q
+        self.other_arg = other_arg
+        self.initialize_audio()
+        super().__init__(*args, **kwargs)
 
-        print('start recording')
-        myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=1)
-        sd.wait()  # Wait until recording is finished
-        write(audio, fs, myrecording)  # Save as WAV file
-        speech, rate = librosa.load(audio, sr=16000)
-        pysndfile.sndio.write('output_ds.wav', speech, rate=rate, format='wav', enc='pcm16')
+    def initialize_audio(self):
+        lang = 'en'
+        fs = 16000 #@param {type:"integer"}
+        tag = 'Shinji Watanabe/librispeech_asr_train_asr_transformer_e18_raw_bpe_sp_valid.acc.best' #@param ["Shinji Watanabe/spgispeech_asr_train_asr_conformer6_n_fft512_hop_length256_raw_en_unnorm_bpe5000_valid.acc.ave", "kamo-naoyuki/librispeech_asr_train_asr_conformer6_n_fft512_hop_length256_raw_en_bpe5000_scheduler_confwarmup_steps40000_optim_conflr0.0025_sp_valid.acc.ave"] {type:"string"}
+        add_new_tab()
+        print('downloading')
+        d = ModelDownloader()
+        global speech2text
+        speech2text = Speech2Text(
+            **d.download_and_unpack(tag),
+            minlenratio=0.0,
+            maxlenratio=0.0,
+            ctc_weight=0.3,
+            beam_size=10,
+            batch_size=0,
+            nbest=1
+        )
 
-        nbests = speech2text(speech)
-        text, *_ = nbests[0]
-        print(f"ASR hypothesis: {text_normalizer(text)}")
+        print('finish config audio model')
+        command1 = ["turn up volume", "turn_up_volume", False]
+        command2 = ["turn down volume", "turn_down_volume", False]
+        command_list.append(command1)
+        command_list.append(command2)
+        command5 = ["set volume to", "set_volume", True]
+        command3 = ["open", "open_app", True]
+        command4 = ["click", "click", False]
+        command6 = ["open new tab", "open_new_tab", False]
+        command7 = ["next tab", "next_tab", False]
+        command8 = ["open new window", "open_new_window", False]
+        command_list.append(command5)
+        command_list.append(command3)
+        command_list.append(command4)
+        print('start process')
 
-        tokens = text_normalizer(text)
-        print(tokens)
-        # valid, terminal, arguments = test_tree.check_command("TURN UP VOLUME")
-        if tokens == 'START':
-            audio_start_flag = True
-        elif audio_start_flag:
-            valid, terminal, arguments = test_tree.check_command(tokens)
 
-            print(valid)
-            print(terminal)
-            print(arguments)
-            if valid:
-                if arguments is not None:
-                    terminal.add_arguments(arguments)
-                terminal.call_command()
-            audio_start_flag = False
-        else:
-            print('audio flag is false, keep listening')
+    def run(self):
+        global audio_start_flag
+        global first
+        global app
+        test_tree = Tree()
+        for command in command_list:
+            test_tree.add_command(command)
+        # print('trying get queue')
+        # while first and self.queue.empty():
+        #     continue
+        # first = False
+        # root = self.queue.get()
+        # print('Succesfully get root!')
+        while True:
+            fs = 44100  # Sample rate
+            seconds = 5  # Duration of recording
+            audio = 'output.wav'
+
+            print('start recording')
+            myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=1)
+            sd.wait()  # Wait until recording is finished
+            write(audio, fs, myrecording)  # Save as WAV file
+            speech, rate = librosa.load(audio, sr=16000)
+            pysndfile.sndio.write('output_ds.wav', speech, rate=rate, format='wav', enc='pcm16')
+
+            nbests = speech2text(speech)
+            text, *_ = nbests[0]
+            print(f"ASR hypothesis: {text_normalizer(text)}")
+
+            tokens = text_normalizer(text)
+            print(tokens)
+            # valid, terminal, arguments = test_tree.check_command("TURN UP VOLUME")
+            if tokens == 'START':
+                audio_start_flag = True
+            elif audio_start_flag:
+                valid, terminal, arguments = test_tree.check_command(tokens)
+
+                print(valid)
+                print(terminal)
+                print(arguments)
+                if valid:
+                    if arguments is not None:
+                        terminal.add_arguments(arguments)
+                    terminal.call_command()
+                audio_start_flag = False
+            else:
+                print('audio flag is false, keep listening')
 
 
 def is_open_command(tokens):
@@ -184,34 +244,17 @@ def combine_str(tokens):
         result += ' '
     return result[:-1]
 
-def initialize_audio():
-    lang = 'en'
-    fs = 16000 #@param {type:"integer"}
-    tag = 'Shinji Watanabe/spgispeech_asr_train_asr_conformer6_n_fft512_hop_length256_raw_en_unnorm_bpe5000_valid.acc.ave' #@param ["Shinji Watanabe/spgispeech_asr_train_asr_conformer6_n_fft512_hop_length256_raw_en_unnorm_bpe5000_valid.acc.ave", "kamo-naoyuki/librispeech_asr_train_asr_conformer6_n_fft512_hop_length256_raw_en_bpe5000_scheduler_confwarmup_steps40000_optim_conflr0.0025_sp_valid.acc.ave"] {type:"string"}
-    d = ModelDownloader()
-    global speech2text
-    speech2text = Speech2Text(
-        **d.download_and_unpack(tag),
-        minlenratio=0.0,
-        maxlenratio=0.0,
-        ctc_weight=0.3,
-        beam_size=10,
-        batch_size=0,
-        nbest=1
-    )
+def add_new_tab():
+    pyautogui.hotkey('command', 't', interval=0.25)
 
-    print('finish config audio model')
-    command1 = ["turn up volume", "turn_up_volume", False]
-    command2 = ["turn down volume", "turn_down_volume", False]
-    command_list.append(command1)
-    command_list.append(command2)
-    command5 = ["set volume to", "set_volume", True]
-    command3 = ["open", "open_app", True]
-    command_list.append(command5)
-    command_list.append(command3)
-    print('start process')
+def add_new_window():
+    pyautogui.hotkey('command', 'n', interval=0.25)
+
+def next_tab():
+    pyautogui.hotkey('command', 'tab', interval=0.25)
 
 command_list = []
 audio_start_flag = False
+first = True
 application_mapping = {'CHROME': 'Google Chrome','MICROSOFT POWERPOINT': 'Microsoft PowerPoint', 'POWERPOINT': 'Microsoft PowerPoint', 'NOTION': 'Notion'}
 speech2text = None

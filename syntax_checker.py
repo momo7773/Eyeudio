@@ -4,5 +4,7 @@ class Syntax_Check(Object):
         self.load_predefined_syntax()
 
     def load_predefined_syntax():
+        pass
 
     def check_syntax(self, command):
+        pass
