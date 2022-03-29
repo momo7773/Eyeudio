@@ -110,11 +110,11 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
-    initialize_audio()
-    t1 = Thread(target=audio_process, args=())
-    #t2 = Thread(target=printTwo, args=())
-    t1.start()
-    #t2.start()
+    # initialize_audio()
+    # t1 = Thread(target=audio_process, args=())
+    # #t2 = Thread(target=printTwo, args=())
+    # t1.start()
+    # #t2.start()
 
     app = Application()
     app.run()
