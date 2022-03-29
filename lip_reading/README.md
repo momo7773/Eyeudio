@@ -55,7 +55,7 @@ start_lip_reading()
 or
 ```bash
 cd Eyeudio/
-python start_lip_reading.py
+python lip_reading/start_lip_reading.py
 ```
 
 ## Module Dependency Tree:
