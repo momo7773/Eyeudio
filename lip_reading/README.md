@@ -29,6 +29,7 @@ python -m pip install tensorflow_addons
 
 ### Step 3 (one-time): Download the Deep Lip Reading's pretrained models
 ```bash
+cd Eyeudio/lip_reading/
 ./download_models.sh
 ```
 
