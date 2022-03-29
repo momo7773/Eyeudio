@@ -32,31 +32,21 @@ python -m pip install tensorflow_addons
 ./download_models.sh
 ```
 
-### Step 4 (Optional): Ensure Lip Reading code is running properly
-Run the entire Lip Reading module
-```bash
-cd Eyeudio/lip_reading/
-python start_lip_reading.py --lip_model_path models/lrs2_lip_model --data_path media/ --data_list media/demo_list.txt
-```
-
-Run the Lip Preprocessing only
-```bash
-cd Eyeudio/lip_reading/lip_preprocessing
-python record_and_crop_video.py
-```
-
-### Step 5: Call the Lip Reading module in GUI or top module
+### Step 4: Call the Lip Reading module in GUI or top module
+In `gui.py`, add:
 ```python
 from lip_reading.start_lip_reading import start_lip_reading
 
-# Then run or call in a thread
+# Then call this in a thread
 start_lip_reading()
 ```
-or
+or run from terminal:
 ```bash
 cd Eyeudio/
 python lip_reading/start_lip_reading.py
 ```
+
+**Note** `gui.py` should be in the root directory (`Eyeudio/`)
 
 ## Module Dependency Tree:
 
