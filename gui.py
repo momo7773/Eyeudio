@@ -133,6 +133,7 @@ if __name__ == "__main__":
     lock = Lock()
     queue = Queue()
 
+    # eyetracking task 1
     def eye_tracker(args, queue):
         global face_eye
         lock.acquire()
@@ -157,6 +158,7 @@ if __name__ == "__main__":
         lock.release()
         face_eye.run(queue)
 
+    # eyetracking task 2
     def eye_cursor():
         screenWidth, screenHeight = pyautogui.size() # Get the size of the primary monitor.
         currentMouseX, currentMouseY = pyautogui.position()
@@ -251,6 +253,7 @@ if __name__ == "__main__":
                 sleep(CURSOR_INTERVAL)
                 iteration += 1
 
+    # for lip-reading usage
     def show_stored_frame(queue): 
         while True:
             # 1. get a frame and it's sequential id.
