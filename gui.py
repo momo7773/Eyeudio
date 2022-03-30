@@ -11,7 +11,7 @@ from kivy import utils
 from threading import Thread, Lock
 from time import sleep
 from audio import *
-from eyetracking.main import start_eye_tracking
+from eyetracking.main import work1, work2, parse_args
 
 
 # Load template file
@@ -115,8 +115,16 @@ if __name__ == "__main__":
     # t1 = Thread(target=audio_process, args=())
     # t1.start()
 
-    t2 = Thread(target=start_eye_tracking, args=())
-    t2.start()
+    # t2 = Thread(target=start_eye_tracking, args=())
+    # t2.start()
+
+    args = parse_args()
+    print(args)
+    t3 = Thread(target=work1, args=(args,))
+    t3.start()
+
+    t4 = Thread(target=work2, args=())
+    t4.start()
 
     app = Application()
     app.run()

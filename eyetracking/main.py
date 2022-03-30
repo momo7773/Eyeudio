@@ -172,7 +172,8 @@ def work2():
     # first four results is used to calibration
     x_right, x_left, y_up, y_down = 0, 0, 0, 0 
     # min     max     min     max
-
+    global status
+    
     iteration = 0
     while True:
         x = 0
@@ -181,7 +182,7 @@ def work2():
             x += res[0]
             y += res[1]
         array = np.array(demo.gaze_estimator.results)
-        
+        print(status)
         # preprocesing: np.abs(data - np.mean(data, axis=0)) > np.std(data, axis=0) and only keep the all true ones
         if len(demo.gaze_estimator.results) == 0:
             sleep(CURSOR_INTERVAL)
@@ -248,13 +249,3 @@ def work2():
 
         sleep(CURSOR_INTERVAL)
         iteration += 1
-
-
-def start_eye_tracking():
-    args = parse_args()
-    print(args)
-    t1 = Thread(target=work1, args=(args,))
-    t1.start()
-
-    t2 = Thread(target=work2, args=())
-    t2.start()
