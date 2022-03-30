@@ -36,9 +36,9 @@ class Demo:
         self.show_normalized_image = self.config.demo.show_normalized_image
         self.show_template_model = self.config.demo.show_template_model
 
-    def run(self) -> None:
+    def run(self, queue) -> None:
         if self.config.demo.use_camera or self.config.demo.video_path:
-            self._run_on_video()
+            self._run_on_video(queue)
         elif self.config.demo.image_path:
             self._run_on_image()
         else:
@@ -60,7 +60,8 @@ class Demo:
             output_path = pathlib.Path(self.config.demo.output_dir) / name
             cv2.imwrite(output_path.as_posix(), self.visualizer.image)
 
-    def _run_on_video(self) -> None:
+    def _run_on_video(self, queue) -> None:
+        n = 0
         while True:
             if self.config.demo.display_on_screen:
                 self._wait_key()
@@ -68,6 +69,8 @@ class Demo:
                     break
 
             ok, frame = self.cap.read()
+            queue.put([frame, n])
+            n = n + 1
             if not ok:
                 break
             self._process_image(frame)

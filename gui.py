@@ -8,10 +8,28 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy import utils
 
+import cv2
+import argparse
+import logging
+import pathlib
+import warnings
+import torch
+import numpy as np
+import pyautogui
+
+from multiprocessing import Queue
+from omegaconf import DictConfig, OmegaConf
+from threading import Thread, Lock
+from time import sleep, ctime
 from threading import Thread, Lock
 from time import sleep
 from audio import *
-from eyetracking.main import work1, work2, parse_args
+from eyetracking.main import parse_args, load_mode_config
+from eyetracking.demo import Demo
+from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
+                    download_ethxgaze_model, download_mpiifacegaze_model,
+                    download_mpiigaze_model, expanduser_all,
+                    generate_dummy_camera_params)
 
 
 # Load template file
@@ -111,20 +129,165 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
+
+    lock = Lock()
+    queue = Queue()
+
+    def eye_tracker(args, queue):
+        global face_eye
+        lock.acquire()
+        config = load_mode_config(args)
+        expanduser_all(config)
+        if config.gaze_estimator.use_dummy_camera_params:
+            generate_dummy_camera_params(config)
+        OmegaConf.set_readonly(config, True)
+
+        if config.face_detector.mode == 'dlib':
+            download_dlib_pretrained_model()
+        if args.mode:
+            if config.mode == 'MPIIGaze':
+                download_mpiigaze_model()
+            elif config.mode == 'MPIIFaceGaze':
+                download_mpiifacegaze_model()
+            elif config.mode == 'ETH-XGaze':
+                download_ethxgaze_model()
+
+        check_path_all(config)
+        face_eye = Demo(config)
+        lock.release()
+        face_eye.run(queue)
+
+    def eye_cursor():
+        screenWidth, screenHeight = pyautogui.size() # Get the size of the primary monitor.
+        currentMouseX, currentMouseY = pyautogui.position()
+        sleep(1) # make sure work1 can get the lock first to init the face_eye
+        lock.acquire()
+        global face_eye
+        CALIBRATION_INTERVAL = 3 # change this interval
+        CURSOR_INTERVAL = 1
+        lock.release()
+
+        # first four results is used to calibration
+        x_right, x_left, y_up, y_down = 0, 0, 0, 0 
+        # min     max     min     max
+
+
+        #sleep here, check the switch every half second.
+        global status
+        while status["eye_on"] is not True:
+            sleep(0.5)
+
+        iteration = 0
+        while True:
+            x = 0
+            y = 0
+            for res in face_eye.gaze_estimator.results:
+                x += res[0]
+                y += res[1]
+            array = np.array(face_eye.gaze_estimator.results)
+            print(status)
+            # preprocesing: np.abs(data - np.mean(data, axis=0)) > np.std(data, axis=0) and only keep the all true ones
+            if len(face_eye.gaze_estimator.results) == 0:
+                sleep(CURSOR_INTERVAL)
+                continue
+            x /= -len(face_eye.gaze_estimator.results) # change sign (right should be larger than left)
+            y /= len(face_eye.gaze_estimator.results)
+            
+
+            # calibration
+            if iteration == 0:
+                print("------------------- Look Upper-left -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            if iteration == 1: # upper-left
+                x_left += x
+                y_up += y
+                print("------------------- Then Look Upper-right -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 2: # upper-right
+                x_right += x
+                y_up += y
+                print("------------------- Then Look lower-right -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 3: # lower-right
+                x_right += x
+                y_down += y
+                print("------------------- Then Look lower-left -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 4: # lower-left
+                x_left += x
+                y_down += y
+                print("-------------------------------------- Finished --------------------------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 5:
+                x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
+                print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
+
+
+            # after calibration, shrink the interval:
+            
+            # scale x and y
+            x = (x - x_left) / (x_right - x_left) * (screenWidth)
+            y = (y - y_up) / (y_down - y_up) * (screenHeight)
+            print("\n x:{}   y: {}".format(x, y))
+            
+            if x <= 0:
+                x = 1
+            if x >= screenWidth:
+                x = screenWidth - 1
+            if y <= 0:
+                y = 1
+            if y >= screenHeight:
+                y = screenHeight - 1
+
+            pyautogui.moveTo(x, y) # x, y  positive number
+
+            sleep(CURSOR_INTERVAL)
+            iteration += 1
+
+    def show_stored_frame(queue):
+        interval = 0.1 #sec
+        while True:
+            sleep(interval)
+            frame, id = queue.get()  # 1. get a frame
+            # can be empty, so use try-except
+            try:
+                cv2.imshow("current frame", frame)  # 2. try to show it
+                print("\n Show Frame No. {} ".format(id))
+                key = cv2.waitKey(1)
+                if key == 27: #'q'
+                    cv2.destroyAllWindows()
+            except:
+                pass
+                
+
     # initialize_audio()
     # t1 = Thread(target=audio_process, args=())
     # t1.start()
 
-    # t2 = Thread(target=start_eye_tracking, args=())
-    # t2.start()
-
     args = parse_args()
-    print(args)
-    t3 = Thread(target=work1, args=(args,))
-    t3.start()
+    task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
+    task_eye_tracker.start()
 
-    t4 = Thread(target=work2, args=())
-    t4.start()
+    task_eye_cursor = Thread(target=eye_cursor, args=())
+    task_eye_cursor.start()
+
+    ## To Jordan:
+    # frames are stored a message queue
+    # task_show_frame is an example
+    task_show_frame = Thread(target=show_stored_frame, args=(queue,))
+    task_show_frame.start()
 
     app = Application()
     app.run()
+
+    cv2.destroyAllWindows()
