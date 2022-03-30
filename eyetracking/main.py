@@ -81,14 +81,15 @@ def parse_args() -> argparse.Namespace:
 
 def load_mode_config(args: argparse.Namespace) -> DictConfig:
     package_root = pathlib.Path(__file__).parent.resolve()
-    if args.mode == 'mpiigaze':
-        path = package_root / 'data/configs/mpiigaze.yaml'
-    elif args.mode == 'mpiifacegaze':
-        path = package_root / 'data/configs/mpiifacegaze.yaml'
-    elif args.mode == 'eth-xgaze':
-        path = package_root / 'data/configs/eth-xgaze.yaml'
-    else:
-        raise ValueError
+    path = package_root / 'data/configs/eth-xgaze.yaml'
+    # if args.mode == 'mpiigaze':
+    #     path = package_root / 'data/configs/mpiigaze.yaml'
+    # elif args.mode == 'mpiifacegaze':
+    #     path = package_root / 'data/configs/mpiifacegaze.yaml'
+    # elif args.mode == 'eth-xgaze':
+    #     path = package_root / 'data/configs/eth-xgaze.yaml'
+    # else:
+    #     raise ValueError
     config = OmegaConf.load(path)
     config.PACKAGE_ROOT = package_root.as_posix()
 
@@ -128,13 +129,13 @@ def work1(args):
     if args.debug:
         logging.getLogger('ptgaze').setLevel(logging.DEBUG)
 
-    if args.config:
-        config = OmegaConf.load(args.config)
-    elif args.mode:
-        config = load_mode_config(args)
-    else:
-        raise ValueError(
-            'You need to specify one of \'--mode\' or \'--config\'.')
+    # if args.config:
+    #     config = OmegaConf.load(args.config)
+    # elif args.mode:
+    config = load_mode_config(args)
+    # else:
+        # raise ValueError(
+            # 'You need to specify one of \'--mode\' or \'--config\'.')
     expanduser_all(config)
     if config.gaze_estimator.use_dummy_camera_params:
         generate_dummy_camera_params(config)
@@ -249,10 +250,13 @@ def work2():
         iteration += 1
 
 
+def start_eye_tracking():
+    args = parse_args()
+    print(args)
+    t1 = Thread(target=work1, args=(args,))
+    t1.start()
 
-args = parse_args()
-t1 = Thread(target=work1, args=(args,))
-t1.start()
+    t2 = Thread(target=work2, args=())
+    t2.start()
 
-t2 = Thread(target=work2, args=())
-t2.start()
+start_eye_tracking()
