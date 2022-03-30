@@ -6,16 +6,12 @@ from kivy.core.window import Window
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-<<<<<<< HEAD
-from multiprocessing import Process, Queue
-=======
 from kivy import utils
-
->>>>>>> 9d1bc08fd3cec59e0ffe5e4c14e5f18855f2e4b4
+from multiprocessing import Process, Queue
 from threading import Thread, Lock
 from time import sleep
 from audio import *
-
+from syntax_checker import *
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -42,6 +38,7 @@ class EyeudioGUI(Widget):
     '''
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
+        Clock.schedule_interval(self.update_lip_log, 1)
 
     def _open_popup(self):
         '''
@@ -52,6 +49,16 @@ class EyeudioGUI(Widget):
                     size_hint=(None, None), size=(400, 400))
         pop.open()
 
+    def update_lip_log(self, dt):
+        global q
+        if not q.empty():
+            print('not empty, lip command adding')
+            last_command = q.get(block = False)
+            if self.ids.audio_text.text.count('\n') > 10:
+                self.audio_text.text = ''
+            self.ids.audio_text.text = self.ids.audio_text.text + '\n' + last_command
+        else:
+            print('lip log empty')
     def _update_button(self, event):
         '''
             Update the ON/OFF buttons and their color when the user click on
@@ -101,6 +108,7 @@ if __name__ == "__main__":
     }
     root_widget = None
     q = Queue()
+    syntax_checker = Checker()
 
     def printOne():
         global status
@@ -116,6 +124,6 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
-    audio = Audio(q, None).start()
+    audio = Audio(q, syntax_checker, None).start()
     app = Application()
     app.run()

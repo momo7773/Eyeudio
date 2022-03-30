@@ -126,7 +126,7 @@
                 Button:
                     id: eye_btn
                     background_normal: ''
-                    background_color: utils.get_color_from_hex('#ED4E33') 
+                    background_color: utils.get_color_from_hex('#ED4E33')
                     text: "OFF"
                     font_size: 30
                     size_hint_y: None
@@ -270,21 +270,16 @@
                     size_hint_y: None
                     height: 60
                 Label:
-<<<<<<< HEAD
-                    id: audio_log
-                    text: "Command 1\nCommand 2"
-                    font_size: 10
-=======
                     canvas.before:
                         Color:
                             rgba: utils.get_color_from_hex('#EEEEEE')
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "Command 1"
+                    id: audio_text
+                    text: ""
                     font_size: 16
                     color: (0,0,0,1)
->>>>>>> 9d1bc08fd3cec59e0ffe5e4c14e5f18855f2e4b4
                 Button:
                     id: aux_btn
                     background_normal: ''
