@@ -23,7 +23,7 @@ import tensorflow as tf
 from tensorflow.python.util import nest
 
 # Assuming EOS_ID is 1
-from util.tf_util import shape_list
+from ..util.tf_util import shape_list
 
 # Dependency imports
 
@@ -32,7 +32,7 @@ EOS_ID = 0
 # Default value for INF
 INF = 1. * 1e7
 
-from config import load_args
+from ..config import load_args
 config = load_args()
 
 def _merge_beam_dim(tensor):

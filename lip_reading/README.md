@@ -35,7 +35,7 @@ cd Eyeudio/lip_reading/
 ./download_models.sh
 ```
 
-### Step 4: Call the Lip Reading module in GUI or top module
+### Step 4: Call the Lip Reading module in GUI or as a module
 In `gui.py`, add:
 ```python
 from lip_reading.start_lip_reading import start_lip_reading
@@ -46,10 +46,11 @@ start_lip_reading()
 or run from terminal:
 ```bash
 cd Eyeudio/
-python lip_reading/start_lip_reading.py
+python -m lip_reading.start_lip_reading
 ```
 
-**Note** `gui.py` should be in the root directory (`Eyeudio/`)
+**Note:** `gui.py` should be in the root directory (`Eyeudio/`)
+**Note:** calling from terminal runs it as a **module** instead of a **top-level script**. This allows for the relative imports within `start_lip_reading`.
 
 ## Module Dependency Tree:
 

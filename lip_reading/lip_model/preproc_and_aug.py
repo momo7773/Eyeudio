@@ -1,4 +1,4 @@
-from util.tf_util import shape_list
+from ..util.tf_util import shape_list
 from tensorflow.python.ops import array_ops, random_ops, math_ops, control_flow_ops
 import tensorflow as tf
 

@@ -10,7 +10,8 @@ from kivy import utils
 
 from threading import Thread, Lock
 from time import sleep
-from audio import *
+# from audio import *
+from lip_reading.start_lip_reading import start_lip_reading
 
 
 # Load template file
@@ -74,6 +75,11 @@ class EyeudioGUI(Widget):
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
                 status["lip_on"] = True
 
+                # temporarily prints output to console
+                lip_command, lip_words = start_lip_reading()
+                print('lip command: ', lip_command)
+                print('lip words: ', lip_words)
+
         elif self.event == "click_aux_btn":
             if status["aux_on"]:
                 self.ids.aux_btn.text = "OFF"
@@ -110,10 +116,10 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
-    initialize_audio()
-    t1 = Thread(target=audio_process, args=())
+    # initialize_audio()
+    # t1 = Thread(target=audio_process, args=())
     #t2 = Thread(target=printTwo, args=())
-    t1.start()
+    # t1.start()
     #t2.start()
 
     app = Application()
