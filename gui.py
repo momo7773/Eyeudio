@@ -12,6 +12,7 @@ from threading import Thread, Lock
 from time import sleep
 from audio import *
 from syntax_checker import *
+from lip_reading.start_lip_reading import start_lip_reading
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -84,6 +85,11 @@ class EyeudioGUI(Widget):
                 self.ids.lip_btn.text = "ON"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
                 status["lip_on"] = True
+
+                # temporarily prints output to console
+                lip_command, lip_words = start_lip_reading()
+                print('lip command: ', lip_command)
+                print('lip words: ', lip_words)
 
         elif self.event == "click_aux_btn":
             if status["aux_on"]:

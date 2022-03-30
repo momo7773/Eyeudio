@@ -28,30 +28,29 @@ python -m pip install tensorflow_addons
 **Note:** We need to activate this environment by running `conda activate lip_env_3.7.7` every time opening up a new terminal.
 
 ### Step 3 (one-time): Download the Deep Lip Reading's pretrained models
+You may need to download/install `wget` for the following to work. 
+Here is one tutorial for Windows: https://builtvisible.com/download-your-website-with-wget/
 ```bash
+cd Eyeudio/lip_reading/
 ./download_models.sh
 ```
 
-### Step 4 (Optional): Ensure Lip Reading code is running properly
-Run the entire Lip Reading module
-```bash
-cd Eyeudio/
-python start_lip_reading.py --lip_model_path models/lrs2_lip_model --data_path media/ --data_list media/demo_list.txt --graph_type infer
-```
-
-Run the Lip Preprocessing only
-```bash
-cd Eyeudio/lip_reading/lip_preprocessing
-python record_and_crop_video.py
-```
-
-### Step 5: Call the Lip Reading module in GUI or top module
+### Step 4: Call the Lip Reading module in GUI or as a module
+In `gui.py`, add:
 ```python
 from lip_reading.start_lip_reading import start_lip_reading
 
-# Then run or call in a thread
+# Then call this in a thread
 start_lip_reading()
 ```
+or run from terminal:
+```bash
+cd Eyeudio/
+python -m lip_reading.start_lip_reading
+```
+
+**Note:** `gui.py` should be in the root directory (`Eyeudio/`)  
+**Note:** calling from terminal runs it as a **module** instead of a **top-level script**. This allows for the relative imports within `start_lip_reading`.
 
 ## Module Dependency Tree:
 

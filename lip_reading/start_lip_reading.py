@@ -11,11 +11,12 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.utils import Progbar
 
-from config import load_args
-from data.list_generator import ListGenerator
-from language_model.char_rnn_lm import CharRnnLmWrapperSingleton
-from lip_model.training_graph import TransformerTrainGraph
-from lip_model.inference_graph import TransformerInferenceGraph
+from .config import load_args
+from .data.list_generator import ListGenerator
+from .language_model.char_rnn_lm import CharRnnLmWrapperSingleton
+from .lip_model.training_graph import TransformerTrainGraph
+from .lip_model.inference_graph import TransformerInferenceGraph
+from .lip_preprocessing.record_and_crop_video import record_and_crop
 
 tf.compat.v1.disable_eager_execution()
 
@@ -174,6 +175,9 @@ def start_lip_reading():
     '''
         Run Lip Preprocessing and Deep Lip Reading
     '''
+    # begin reading in camera input data
+    record_and_crop()
+
     np.random.seed(config.seed)
     tf.random.set_seed(config.seed)
 
