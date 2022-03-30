@@ -6,8 +6,8 @@ import warnings
 import torch
 from omegaconf import DictConfig, OmegaConf
 
-from demo import Demo
-from utils import (check_path_all, download_dlib_pretrained_model,
+from eyetracking.demo import Demo
+from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
                     download_ethxgaze_model, download_mpiifacegaze_model,
                     download_mpiigaze_model, expanduser_all,
                     generate_dummy_camera_params)
@@ -258,5 +258,3 @@ def start_eye_tracking():
 
     t2 = Thread(target=work2, args=())
     t2.start()
-
-start_eye_tracking()
