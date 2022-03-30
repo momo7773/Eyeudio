@@ -12,7 +12,7 @@ from threading import Thread, Lock
 from time import sleep
 from audio import *
 from syntax_checker import *
-from lip_reading.start_lip_reading import start_lip_reading
+# from lip_reading.start_lip_reading import start_lip_reading
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -50,16 +50,17 @@ class EyeudioGUI(Widget):
                     size_hint=(None, None), size=(400, 400))
         pop.open()
 
-    def update_lip_log(self, dt):
+    def update_audio_log(self, dt):
         global q
         if not q.empty():
-            print('not empty, lip command adding')
+            print('not empty, audio command adding')
             last_command = q.get(block = False)
             if self.ids.audio_text.text.count('\n') > 10:
                 self.audio_text.text = ''
             self.ids.audio_text.text = self.ids.audio_text.text + '\n' + last_command
         else:
-            print('lip log empty')
+            print('audio log empty')
+
     def _update_button(self, event):
         '''
             Update the ON/OFF buttons and their color when the user click on

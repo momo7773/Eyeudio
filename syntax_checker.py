@@ -121,6 +121,10 @@ class TerminalNode(Node):
         else:
             globals()[self.function_call](self.arguments)
 
+def text_normalizer(text):
+    text = text.upper()
+    return text.translate(str.maketrans('', '', string.punctuation))
+    
 def click():
     print('call click')
     pyautogui.click()
