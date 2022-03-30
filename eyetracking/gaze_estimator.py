@@ -122,6 +122,6 @@ class GazeEstimator:
         face.normalized_gaze_angles = prediction[0]
         face.angle_to_vector()
         face.denormalize_gaze_vector()
-        if len(self.results) > 10:
+        if len(self.results) > 20:
             self.results.pop(0)
         self.results.append(face.gaze_vector) # this line is to add current predicted results into results.

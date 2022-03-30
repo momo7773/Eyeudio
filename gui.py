@@ -166,7 +166,7 @@ if __name__ == "__main__":
         lock.acquire()
         global face_eye
         CALIBRATION_INTERVAL = 3 # change this interval
-        CURSOR_INTERVAL = 0.5
+        CURSOR_INTERVAL = 2
         lock.release()
 
         # first four results is used to calibration
@@ -256,25 +256,21 @@ if __name__ == "__main__":
     # for lip-reading usage
     def show_stored_frame(queue): 
         while True:
-            # 1. get a frame and it's sequential id.
-            frame, id = queue.get()  
-            
-            # the frame can be empty, so use try-except
-            try:
+            if not queue.empty():
+                # 1. get a frame and it's sequential id.
+                frame, id = queue.get()
                 # 2. try to show it
                 cv2.imshow("current frame", frame)  
                 key = cv2.waitKey(1)
                 if key == 27: #'q'
                     cv2.destroyAllWindows()
-            except:
-                pass
                 
-    #### Speech Recognition ####
+    #### --- Speech Recognition --- ####
     # initialize_audio()
     # t1 = Thread(target=audio_process, args=())
     # t1.start()
 
-    #### Eye Tracking ####
+    #### --- Eye Tracking --- ####
     args = parse_args()
     task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
     task_eye_tracker.start()
@@ -282,7 +278,7 @@ if __name__ == "__main__":
     task_eye_cursor = Thread(target=eye_cursor, args=())
     task_eye_cursor.start()
 
-    #### Lip Reading ####
+    #### --- Lip Reading --- ####
     ## To Jordan:
     # frames are stored a message queue
     # task_show_frame is an example
