@@ -271,6 +271,7 @@ if __name__ == "__main__":
     t1 = Thread(target=audio_process, args=())
     t1.start()
 
+    ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
     #### --- Eye Tracking --- ####
     args = parse_args()
     task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
