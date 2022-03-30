@@ -164,7 +164,7 @@ if __name__ == "__main__":
         lock.acquire()
         global face_eye
         CALIBRATION_INTERVAL = 3 # change this interval
-        CURSOR_INTERVAL = 1
+        CURSOR_INTERVAL = 0.5
         lock.release()
 
         # first four results is used to calibration
@@ -185,7 +185,6 @@ if __name__ == "__main__":
                 x += res[0]
                 y += res[1]
             array = np.array(face_eye.gaze_estimator.results)
-            print(status)
             # preprocesing: np.abs(data - np.mean(data, axis=0)) > np.std(data, axis=0) and only keep the all true ones
             if len(face_eye.gaze_estimator.results) == 0:
                 sleep(CURSOR_INTERVAL)
@@ -232,37 +231,35 @@ if __name__ == "__main__":
                 x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
                 print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
 
+            if status["eye_on"]:
+                # scale x and y
+                x = (x - x_left) / (x_right - x_left) * (screenWidth)
+                y = (y - y_up) / (y_down - y_up) * (screenHeight)
+                print("\n x:{}   y: {}".format(x, y))
+                
+                if x <= 0:
+                    x = 1
+                if x >= screenWidth:
+                    x = screenWidth - 1
+                if y <= 0:
+                    y = 1
+                if y >= screenHeight:
+                    y = screenHeight - 1
 
-            # after calibration, shrink the interval:
-            
-            # scale x and y
-            x = (x - x_left) / (x_right - x_left) * (screenWidth)
-            y = (y - y_up) / (y_down - y_up) * (screenHeight)
-            print("\n x:{}   y: {}".format(x, y))
-            
-            if x <= 0:
-                x = 1
-            if x >= screenWidth:
-                x = screenWidth - 1
-            if y <= 0:
-                y = 1
-            if y >= screenHeight:
-                y = screenHeight - 1
+                pyautogui.moveTo(x, y) # x, y  positive number
 
-            pyautogui.moveTo(x, y) # x, y  positive number
+                sleep(CURSOR_INTERVAL)
+                iteration += 1
 
-            sleep(CURSOR_INTERVAL)
-            iteration += 1
-
-    def show_stored_frame(queue):
-        interval = 0.1 #sec
+    def show_stored_frame(queue): 
         while True:
-            sleep(interval)
-            frame, id = queue.get()  # 1. get a frame
-            # can be empty, so use try-except
+            # 1. get a frame and it's sequential id.
+            frame, id = queue.get()  
+            
+            # the frame can be empty, so use try-except
             try:
-                cv2.imshow("current frame", frame)  # 2. try to show it
-                print("\n Show Frame No. {} ".format(id))
+                # 2. try to show it
+                cv2.imshow("current frame", frame)  
                 key = cv2.waitKey(1)
                 if key == 27: #'q'
                     cv2.destroyAllWindows()
