@@ -269,11 +269,12 @@ if __name__ == "__main__":
             except:
                 pass
                 
-
+    #### Speech Recognition ####
     # initialize_audio()
     # t1 = Thread(target=audio_process, args=())
     # t1.start()
 
+    #### Eye Tracking ####
     args = parse_args()
     task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
     task_eye_tracker.start()
@@ -281,6 +282,7 @@ if __name__ == "__main__":
     task_eye_cursor = Thread(target=eye_cursor, args=())
     task_eye_cursor.start()
 
+    #### Lip Reading ####
     ## To Jordan:
     # frames are stored a message queue
     # task_show_frame is an example
