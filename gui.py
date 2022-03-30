@@ -18,20 +18,21 @@ import numpy as np
 import pyautogui
 import atexit
 
-from multiprocessing import Queue
+from multiprocessing import Process, Queue
 from omegaconf import DictConfig, OmegaConf
 from threading import Thread, Lock
 from time import sleep, ctime
 from threading import Thread, Lock
 from time import sleep
 from audio import *
+from syntax_checker import *
+from lip_reading.start_lip_reading import start_lip_reading
 from eyetracking.main import parse_args, load_mode_config
 from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
                     download_ethxgaze_model, download_mpiifacegaze_model,
                     download_mpiigaze_model, expanduser_all,
                     generate_dummy_camera_params)
-
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -58,6 +59,7 @@ class EyeudioGUI(Widget):
     '''
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
+        Clock.schedule_interval(self.update_lip_log, 1)
 
     def _open_popup(self):
         '''
@@ -68,6 +70,16 @@ class EyeudioGUI(Widget):
                     size_hint=(None, None), size=(400, 400))
         pop.open()
 
+    def update_lip_log(self, dt):
+        global q
+        if not q.empty():
+            print('not empty, lip command adding')
+            last_command = q.get(block = False)
+            if self.ids.audio_text.text.count('\n') > 10:
+                self.audio_text.text = ''
+            self.ids.audio_text.text = self.ids.audio_text.text + '\n' + last_command
+        else:
+            print('lip log empty')
     def _update_button(self, event):
         '''
             Update the ON/OFF buttons and their color when the user click on
@@ -94,6 +106,11 @@ class EyeudioGUI(Widget):
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
                 status["lip_on"] = True
 
+                # temporarily prints output to console
+                lip_command, lip_words = start_lip_reading()
+                print('lip command: ', lip_command)
+                print('lip words: ', lip_words)
+
         elif self.event == "click_aux_btn":
             if status["aux_on"]:
                 self.ids.aux_btn.text = "OFF"
@@ -115,6 +132,9 @@ if __name__ == "__main__":
         "lip_on": False,
         "aux_on": True
     }
+    root_widget = None
+    q = Queue()
+    syntax_checker = Checker()
 
     def printOne():
         global status
@@ -130,6 +150,7 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
+    audio = Audio(q, syntax_checker, None).start()
 
     lock = Lock()
     queue = Queue()

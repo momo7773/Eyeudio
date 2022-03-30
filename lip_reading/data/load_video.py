@@ -1,8 +1,5 @@
 import numpy as np
-from lip_preprocessing.record_and_crop_video import record_and_crop, get_copy_of_output_frames
-
-
-record_and_crop()
+from ..lip_preprocessing.record_and_crop_video import get_copy_of_output_frames
 
 def load_video_frames(path, maxlen, pad_mode, grayscale=True):
     mat = np.array(get_copy_of_output_frames())

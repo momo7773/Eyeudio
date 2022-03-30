@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy as np
 
-from config import load_args
-from lip_model.losses import cer
-from lip_model.modules import embedding, sinusoid_encoding, multihead_attention, feedforward, label_smoothing
-from lip_model.visual_frontend import VisualFrontend
-from util.tf_util import shape_list
+from ..config import load_args
+from .losses import cer
+from .modules import embedding, sinusoid_encoding, multihead_attention, feedforward, label_smoothing
+from .visual_frontend import VisualFrontend
+from ..util.tf_util import shape_list
 
 config = load_args()
 

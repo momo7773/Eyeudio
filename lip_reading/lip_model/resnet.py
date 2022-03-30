@@ -1,6 +1,6 @@
 from __future__ import division
 
-from util.tf_util import batch_normalization_wrapper
+from ..util.tf_util import batch_normalization_wrapper
 from tensorflow.keras import backend as K
 import tensorflow as tf
 
