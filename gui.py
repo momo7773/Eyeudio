@@ -267,9 +267,9 @@ if __name__ == "__main__":
                     cv2.destroyAllWindows()
                 
     #### --- Speech Recognition --- ####
-    # initialize_audio()
-    # t1 = Thread(target=audio_process, args=())
-    # t1.start()
+    initialize_audio()
+    t1 = Thread(target=audio_process, args=())
+    t1.start()
 
     #### --- Eye Tracking --- ####
     args = parse_args()
