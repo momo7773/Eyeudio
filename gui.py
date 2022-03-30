@@ -16,6 +16,7 @@ import warnings
 import torch
 import numpy as np
 import pyautogui
+import atexit
 
 from multiprocessing import Queue
 from omegaconf import DictConfig, OmegaConf
@@ -288,4 +289,7 @@ if __name__ == "__main__":
     app = Application()
     app.run()
 
-    cv2.destroyAllWindows()
+    def exit_handler():
+        cv2.destroyAllWindows()
+    atexit.register(exit_handler)
+    
