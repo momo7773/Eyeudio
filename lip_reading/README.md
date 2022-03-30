@@ -49,7 +49,7 @@ cd Eyeudio/
 python -m lip_reading.start_lip_reading
 ```
 
-**Note:** `gui.py` should be in the root directory (`Eyeudio/`)
+**Note:** `gui.py` should be in the root directory (`Eyeudio/`)  
 **Note:** calling from terminal runs it as a **module** instead of a **top-level script**. This allows for the relative imports within `start_lip_reading`.
 
 ## Module Dependency Tree:
