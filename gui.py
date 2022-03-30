@@ -150,7 +150,6 @@ if __name__ == "__main__":
                 print("Aux on")
                 sleep(1)
 
-    audio = Audio(q, syntax_checker, None).start()
 
     lock = Lock()
     queue = Queue()
@@ -192,7 +191,7 @@ if __name__ == "__main__":
         lock.release()
 
         # first four results is used to calibration
-        x_right, x_left, y_up, y_down = 0, 0, 0, 0 
+        x_right, x_left, y_up, y_down = 0, 0, 0, 0
         # min     max     min     max
 
 
@@ -215,7 +214,7 @@ if __name__ == "__main__":
                 continue
             x /= -len(face_eye.gaze_estimator.results) # change sign (right should be larger than left)
             y /= len(face_eye.gaze_estimator.results)
-            
+
 
             # calibration
             if iteration == 0:
@@ -260,7 +259,7 @@ if __name__ == "__main__":
                 x = (x - x_left) / (x_right - x_left) * (screenWidth)
                 y = (y - y_up) / (y_down - y_up) * (screenHeight)
                 print("\n x:{}   y: {}".format(x, y))
-                
+
                 if x <= 0:
                     x = 1
                 if x >= screenWidth:
@@ -276,21 +275,19 @@ if __name__ == "__main__":
                 iteration += 1
 
     # for lip-reading usage
-    def show_stored_frame(queue): 
+    def show_stored_frame(queue):
         while True:
             if not queue.empty():
                 # 1. get a frame and it's sequential id.
                 frame, id = queue.get()
                 # 2. try to show it
-                cv2.imshow("current frame", frame)  
+                cv2.imshow("current frame", frame)
                 key = cv2.waitKey(1)
                 if key == 27: #'q'
                     cv2.destroyAllWindows()
-                
+
     #### --- Speech Recognition --- ####
-    initialize_audio()
-    t1 = Thread(target=audio_process, args=())
-    t1.start()
+    audio = Audio(q, syntax_checker, None).start()
 
     ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
     #### --- Eye Tracking --- ####
@@ -314,4 +311,3 @@ if __name__ == "__main__":
     def exit_handler():
         cv2.destroyAllWindows()
     atexit.register(exit_handler)
-    
