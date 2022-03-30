@@ -28,6 +28,8 @@ python -m pip install tensorflow_addons
 **Note:** We need to activate this environment by running `conda activate lip_env_3.7.7` every time opening up a new terminal.
 
 ### Step 3 (one-time): Download the Deep Lip Reading's pretrained models
+You may need to download/install `wget` for the following to work. 
+Here is one tutorial for Windows: https://builtvisible.com/download-your-website-with-wget/
 ```bash
 cd Eyeudio/lip_reading/
 ./download_models.sh
