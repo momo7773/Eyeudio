@@ -3,9 +3,9 @@ import threading
 
 import numpy as np
 
-from config import load_args
-from data.label_vectorization import SentenceVectorizer
-from data.load_video import load_video_frames
+from ..config import load_args
+from .label_vectorization import SentenceVectorizer
+from .load_video import load_video_frames
 
 
 config = load_args()

@@ -126,7 +126,7 @@
                 Button:
                     id: eye_btn
                     background_normal: ''
-                    background_color: utils.get_color_from_hex('#ED4E33') 
+                    background_color: utils.get_color_from_hex('#ED4E33')
                     text: "OFF"
                     font_size: 30
                     size_hint_y: None
@@ -276,7 +276,8 @@
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "Command 1"
+                    id: audio_text
+                    text: ""
                     font_size: 16
                     color: (0,0,0,1)
                 Button:
