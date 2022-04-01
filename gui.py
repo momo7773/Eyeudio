@@ -187,13 +187,19 @@ if __name__ == "__main__":
             for res in face_eye.gaze_estimator.results:
                 x += res[0]
                 y += res[1]
-            array = np.array(face_eye.gaze_estimator.results)
-            # preprocesing: np.abs(data - np.mean(data, axis=0)) > np.std(data, axis=0) and only keep the all true ones
             if len(face_eye.gaze_estimator.results) == 0:
                 sleep(CURSOR_INTERVAL)
                 continue
-            x /= -len(face_eye.gaze_estimator.results) # change sign (right should be larger than left)
-            y /= len(face_eye.gaze_estimator.results)
+            array = np.array(face_eye.gaze_estimator.results)
+            # preprocesing: 
+            arr = np.array(array)
+            logical_arr = np.abs(arr - np.mean(arr, axis=0)) < np.std(arr, axis=0)
+            filtered_arr = arr[logical_arr]
+            if len(filtered_arr) == 0:
+                sleep(CURSOR_INTERVAL)
+                continue
+            x /= -len(filtered_arr) # change sign (right should be larger than left)
+            y /= len(filtered_arr)
             
 
             # calibration
