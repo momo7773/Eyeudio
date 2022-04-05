@@ -24,7 +24,9 @@ from threading import Thread, Lock
 from time import sleep, ctime
 from threading import Thread, Lock
 from time import sleep
-from audio import *
+
+#START (uncomment in final version) {
+'''from audio import *
 from syntax_checker import *
 from lip_reading.start_lip_reading import start_lip_reading
 from eyetracking.main import parse_args, load_mode_config
@@ -32,7 +34,19 @@ from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
                     download_ethxgaze_model, download_mpiifacegaze_model,
                     download_mpiigaze_model, expanduser_all,
-                    generate_dummy_camera_params)
+                    generate_dummy_camera_params) ''' 
+# } END
+
+#ADD ~ noise-detector {
+import time
+import math 
+import struct
+from numpy import int16
+import pyaudio
+from cmath import inf
+from kivy.clock import Clock 
+# } END
+
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -59,7 +73,60 @@ class EyeudioGUI(Widget):
     '''
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
+        #ADD ~ noise-detector {
+        self.audioIndex = 0 
+        self.dbValsAvg = []
+        self.dbVals = [[]]
+        self.CHUNK = 1024
+        self.p = pyaudio.PyAudio()
+        self.timeStep = 3
+        self.index = 0
+        self.reset = 0        
+        self.stream = self.p.open(format = pyaudio.paInt16,
+            channels = 1,
+            rate = 44100,
+            input = True,
+            frames_per_buffer = self.CHUNK) 
+        # } END
+
         Clock.schedule_interval(self.update_lip_log, 1)
+
+        #ADD ~ noise-detector {
+        Clock.schedule_interval(self.calc_rms_val, 1)
+        Clock.schedule_interval(self.calc_average, 3) 
+        # } END
+    
+    #ADD ~ noise-detector {
+    def calc_rms_val(self, dt):
+        end = time.time() + 0.1
+        while time.time() < end:
+            data = self.stream.read(self.CHUNK, exception_on_overflow=False)
+            self.dbVals.append([])
+            count = len(data) / 2
+            format = "%dh" % (count)
+            sum_squares = 0.0
+            for sample in struct.unpack(format, data):
+                n = sample * (1.0 / 32768)
+                sum_squares += n ** 2
+            self.dbVals[self.audioIndex].append(20 * math.log10(math.sqrt(sum_squares / count)))
+    
+    def calc_average(self, dt):
+        self.dbValsAvg.append(sum(self.dbVals[self.audioIndex]) / len(self.dbVals[self.audioIndex]))
+        print("Audio Level: " + str(self.dbValsAvg[-1]))
+        if (self.dbValsAvg[-1] > -10) and not status["lip_on"] and time.time() > self.reset + 120:
+            self.reset = time.time()
+            self._suggest_Input_Switch()
+        self.audioIndex += 1
+
+    def _suggest_Input_Switch(self):
+        
+            #Open a popup when the audio exceeds a limit, prompting the user to switch speech recognition -> lip reading
+        
+        pop = Popup(title = 'Suggest Activating Lip Input',
+                    content=WrappedLabel(text='The background audio level has exceeded the calibrated threshold for optimal speech recognition performace. Consider activating the lip-reading input.'),
+                    size_hint=(None, None), size= (500, 500))
+        pop.open()
+    # } END
 
     def _open_popup(self):
         '''
@@ -134,7 +201,7 @@ if __name__ == "__main__":
     }
     root_widget = None
     q = Queue()
-    syntax_checker = Checker()
+    #syntax_checker = Checker() (uncomment in final version)
 
     def printOne():
         global status
@@ -287,23 +354,29 @@ if __name__ == "__main__":
                     cv2.destroyAllWindows()
 
     #### --- Speech Recognition --- ####
-    audio = Audio(q, syntax_checker, None).start()
+    
+    #audio = Audio(q, syntax_checker, None).start() #(uncomment in final version)
 
     ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
     #### --- Eye Tracking --- ####
+    
+    #START Comment (uncomment in final version) {
+    '''
     args = parse_args()
     task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
     task_eye_tracker.start()
 
     task_eye_cursor = Thread(target=eye_cursor, args=())
-    task_eye_cursor.start()
+    task_eye_cursor.start()''' 
+    # } END 
 
     #### --- Lip Reading --- ####
     ## To Jordan:
     # frames are stored a message queue
     # task_show_frame is an example
-    task_show_frame = Thread(target=show_stored_frame, args=(queue,))
-    task_show_frame.start()
+    
+    '''task_show_frame = Thread(target=show_stored_frame, args=(queue,))
+    task_show_frame.start()''' #uncomment in final version
 
     app = Application()
     app.run()
