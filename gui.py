@@ -17,6 +17,7 @@ import torch
 import numpy as np
 import pyautogui
 import atexit
+import time
 
 from multiprocessing import Process, Queue
 from omegaconf import DictConfig, OmegaConf
@@ -24,9 +25,13 @@ from threading import Thread, Lock
 from time import sleep, ctime
 from threading import Thread, Lock
 from time import sleep
-from audio import *
-from syntax_checker import *
+from collections import deque
+
+# EYEUDIO IMPORTS =============================================
+# from audio import * # audio uncomment
+# from syntax_checker import * # audio uncomment
 from lip_reading.start_lip_reading import start_lip_reading
+from lip_reading.lip_preprocessing.record_and_crop_video import process_lip_frame_loop
 from eyetracking.main import parse_args, load_mode_config
 from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
@@ -59,7 +64,7 @@ class EyeudioGUI(Widget):
     '''
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_lip_log, 1)
+        # Clock.schedule_interval(self.update_lip_log, 1) # audio uncomment
 
     def _open_popup(self):
         '''
@@ -134,28 +139,13 @@ if __name__ == "__main__":
     }
     root_widget = None
     q = Queue()
-    syntax_checker = Checker()
-
-    def printOne():
-        global status
-        while True:
-            if status["eye_on"]:
-                print("Eye on")
-                sleep(1)
-
-    def printTwo():
-        global status
-        while True:
-            if status["aux_on"]:
-                print("Aux on")
-                sleep(1)
-
+    # syntax_checker = Checker() # audio uncomment
 
     lock = Lock()
-    queue = Queue()
+    lip_reading_deque = deque(maxlen=4) # 4 is an arbitrary max number of raw frames to keep prior to cropping (which is slow)
 
     # eyetracking task 1
-    def eye_tracker(args, queue):
+    def eye_tracker(args, lip_reading_deque):
         global face_eye
         lock.acquire()
         config = load_mode_config(args)
@@ -177,7 +167,7 @@ if __name__ == "__main__":
         check_path_all(config)
         face_eye = Demo(config)
         lock.release()
-        face_eye.run(queue)
+        face_eye.run(lip_reading_deque)
 
     # eyetracking task 2
     def eye_cursor():
@@ -280,36 +270,21 @@ if __name__ == "__main__":
                 sleep(CURSOR_INTERVAL)
                 iteration += 1
 
-    # for lip-reading usage
-    def show_stored_frame(queue):
-        while True:
-            if not queue.empty():
-                # 1. get a frame and it's sequential id.
-                frame, id = queue.get()
-                # 2. try to show it
-                cv2.imshow("current frame", frame)
-                key = cv2.waitKey(1)
-                if key == 27: #'q'
-                    cv2.destroyAllWindows()
-
     #### --- Speech Recognition --- ####
-    audio = Audio(q, syntax_checker, None).start()
+    # audio = Audio(q, syntax_checker, None).start() # audio uncomment
 
     ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
     #### --- Eye Tracking --- ####
     args = parse_args()
-    task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
+    task_eye_tracker = Thread(target=eye_tracker, args=(args,lip_reading_deque,))
     task_eye_tracker.start()
 
-    task_eye_cursor = Thread(target=eye_cursor, args=())
-    task_eye_cursor.start()
+    # task_eye_cursor = Thread(target=eye_cursor, args=()) # commented out to keep from moving cursor
+    # task_eye_cursor.start()
 
     #### --- Lip Reading --- ####
-    ## To Jordan:
-    # frames are stored a message queue
-    # task_show_frame is an example
-    task_show_frame = Thread(target=show_stored_frame, args=(queue,))
-    task_show_frame.start()
+    task_process_lip_frames = Thread(target=process_lip_frame_loop, args=(lip_reading_deque,))
+    task_process_lip_frames.start()
 
     app = Application()
     app.run()

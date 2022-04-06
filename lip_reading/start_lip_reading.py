@@ -175,8 +175,6 @@ def start_lip_reading():
     '''
         Run Lip Preprocessing and Deep Lip Reading
     '''
-    # begin reading in camera input data
-    record_and_crop()
 
     np.random.seed(config.seed)
     tf.random.set_seed(config.seed)

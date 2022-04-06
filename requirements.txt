@@ -1,4 +1,7 @@
-# For GUI (Kivy)
+# Unknown what for ============================================
+omegaconf
+
+# For GUI (Kivy) ==============================================
 certifi==2021.10.8
 # charset-normalizer==2.0.7 # included in Deep Lip Reading
 docutils==0.18
@@ -13,17 +16,30 @@ Kivy-Garden==0.1.4
 Pygments==2.10.0
 pypiwin32==223
 pywin32==302
-<<<<<<< HEAD
-requests==2.26.0
-urllib3==1.26.7
-<<<<<<< HEAD
-=======
-=======
 # requests==2.26.0 # included in Deep Lip Reading
 # urllib3==1.26.7 # included in Deep Lip Reading
->>>>>>> 61770bb50d77df240decc5648f5f1281e37dcf6a
+PyAutoGUI
 
-# For Deep Lip Reading
+# For mpiigaze and eye-tracking ===============================
+dlib
+fvcore
+# h5py # included in Deep Lip Reading
+# numpy # included in Deep Lip Reading
+# opencv-python # included in Deep Lip Reading
+pandas
+pyyaml
+scipy
+tensorboardX
+# termcolor # included in Deep Lip Reading
+torch
+torchvision
+# tqdm # included in Deep Lip Reading
+yacs
+face-alignment
+mediapipe
+timm
+
+# For Deep Lip Reading ========================================
 absl-py==1.0.0
 astunparse==1.6.3
 av==8.1.0
@@ -86,4 +102,3 @@ urllib3==1.26.8
 Werkzeug==2.0.3
 wrapt==1.13.3
 zipp==3.7.0
->>>>>>> 9d1bc08fd3cec59e0ffe5e4c14e5f18855f2e4b4
