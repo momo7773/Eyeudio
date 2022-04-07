@@ -4,9 +4,11 @@ from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
+from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy import utils
+from kivy.clock import Clock
 
 import cv2
 import argparse
@@ -30,8 +32,8 @@ from collections import deque
 # EYEUDIO IMPORTS =============================================
 # from audio import * # audio uncomment
 # from syntax_checker import * # audio uncomment
-from lip_reading.start_lip_reading import start_lip_reading
-from lip_reading.lip_preprocessing.record_and_crop_video import process_lip_frame_loop
+# from lip_reading.start_lip_reading import start_lip_reading #lip_reading uncomment
+# from lip_reading.lip_preprocessing.record_and_crop_video import process_lip_frame_loop #lip_reading uncomment
 from eyetracking.main import parse_args, load_mode_config
 from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
@@ -62,9 +64,11 @@ class EyeudioGUI(Widget):
     '''
         Graphic User Interface screen for Eyeudio
     '''
+    cursor_position = StringProperty("X: 0 \nY: 0")
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
         # Clock.schedule_interval(self.update_lip_log, 1) # audio uncomment
+        Clock.schedule_interval(self.update_cursor_position, 1) # every second
 
     def _open_popup(self):
         '''
@@ -74,6 +78,9 @@ class EyeudioGUI(Widget):
                     content=WrappedLabel(text='Authors: Hoang Nguyen, Yiqing Tao, Kanglan Tang, Jordan Wong, Yaowei Ma, Frank Cai, Vincent Wang, Ananth Goyal\n\nBy 2040, over 78 million people in the US are projected to experience hand mobility limitations such as Arthritis or Repetitive Strain Injury (RSI), which affect their ability to perform computer-related tasks. The Assistive Eyeudio Control Team is developing an affordable hands-free alternative for interacting with a computer. Eyeudio makes use of the camera and microphone on any common computer (i.e. laptop) to control the mouse cursor with eye-tracking while carrying out specific commands with lip reading and speech recognition.'),
                     size_hint=(None, None), size=(400, 400))
         pop.open()
+
+    def update_cursor_position(self, dt):
+        self.cursor_position = "X: {:.0f}\nY: {:.0f}".format(status["x"], status["y"])
 
     def update_lip_log(self, dt):
         global q
@@ -135,7 +142,9 @@ if __name__ == "__main__":
     status = {
         "eye_on": False,
         "lip_on": False,
-        "aux_on": True
+        "aux_on": True,
+        "x": 0,
+        "y": 0
     }
     root_widget = None
     q = Queue()
@@ -255,6 +264,8 @@ if __name__ == "__main__":
                 x = (x - x_left) / (x_right - x_left) * (screenWidth)
                 y = (y - y_up) / (y_down - y_up) * (screenHeight)
                 print("\n x:{}   y: {}".format(x, y))
+                status["x"] = x
+                status["y"] = y
 
                 if x <= 0:
                     x = 1
@@ -279,12 +290,12 @@ if __name__ == "__main__":
     task_eye_tracker = Thread(target=eye_tracker, args=(args,lip_reading_deque,))
     task_eye_tracker.start()
 
-    # task_eye_cursor = Thread(target=eye_cursor, args=()) # commented out to keep from moving cursor
-    # task_eye_cursor.start()
+    task_eye_cursor = Thread(target=eye_cursor, args=()) # commented out to keep from moving cursor
+    task_eye_cursor.start()
 
     #### --- Lip Reading --- ####
-    task_process_lip_frames = Thread(target=process_lip_frame_loop, args=(lip_reading_deque,))
-    task_process_lip_frames.start()
+    # task_process_lip_frames = Thread(target=process_lip_frame_loop, args=(lip_reading_deque,))
+    # task_process_lip_frames.start()
 
     app = Application()
     app.run()
