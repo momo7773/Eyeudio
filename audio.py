@@ -3,7 +3,6 @@ import torch
 import string
 from espnet_model_zoo.downloader import ModelDownloader
 from espnet2.bin.asr_inference import Speech2Text
-from kivy.clock import Clock
 import pysndfile
 import osascript
 import sounddevice as sd

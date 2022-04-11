@@ -1,10 +1,6 @@
-import pysndfile
 import osascript
-import sounddevice as sd
-import librosa
 import subprocess
 import pyautogui
-import keyboard
 
 class Checker(object):
     def __init__(self):
