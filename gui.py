@@ -6,13 +6,35 @@ from kivy.core.window import Window
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy import utils
+from kivy.clock import Clock
+
+# import cv2
+# import argparse
+# import logging
+# import pathlib
+# import warnings
+# import torch
+# import numpy as np
+# import pyautogui
+# import atexit
+
 from multiprocessing import Process, Queue
+# from omegaconf import DictConfig, OmegaConf
 from threading import Thread, Lock
-from time import sleep
+from time import sleep, ctime
 from audio import *
-from syntax_checker import *
+from syntax_checker import Checker
 # from lip_reading.start_lip_reading import start_lip_reading
+# from eyetracking.main import parse_args, load_mode_config
+# from eyetracking.demo import Demo
+# from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
+#                     download_ethxgaze_model, download_mpiifacegaze_model,
+#                     download_mpiigaze_model, expanduser_all,
+#                     generate_dummy_camera_params)
+
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -33,74 +55,222 @@ class WrappedLabel(Label):
             texture_size=lambda *x: self.setter('height')(self, self.texture_size[1]))
 
 
+class WrappedButton(Button):
+    '''
+        Kivy's Button with automatic word wrap
+    '''
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bind(
+            width=lambda *x:
+            self.setter('text_size')(self, (self.width, None)),
+            texture_size=lambda *x: self.setter('height')(self, self.texture_size[1]))
+
+
 class EyeudioGUI(Widget):
     '''
         Graphic User Interface screen for Eyeudio
+        Attributes:
+            current_lip_output (str): the sentence recognized by lip reading module
+            current_audio_output (str): the sentence recognized by speech recognition module
+            selected_audio (bool): whether the user select the lip reading prediction or speech recognition prediction (in the "Do you mean..." popup)
     '''
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
-        Clock.schedule_interval(self.update_lip_log, 1)
+        Clock.schedule_interval(self._update_audio_status, 0.5)
+        Clock.schedule_interval(self._update_log, 1)
 
-    def _open_popup(self):
+        self.current_lip_output = ''
+        self.current_audio_output = ''
+        self.selected_audio = True
+
+    def _open_info_popup(self, *args):
         '''
             Open a popup when a user click on the "More Info" button
         '''
-        pop = Popup(title='Eyeudio Project',
+        info_popup = Popup(title='Eyeudio Project', title_size=(30), title_align='center',
                     content=WrappedLabel(text='Authors: Hoang Nguyen, Yiqing Tao, Kanglan Tang, Jordan Wong, Yaowei Ma, Frank Cai, Vincent Wang, Ananth Goyal\n\nBy 2040, over 78 million people in the US are projected to experience hand mobility limitations such as Arthritis or Repetitive Strain Injury (RSI), which affect their ability to perform computer-related tasks. The Assistive Eyeudio Control Team is developing an affordable hands-free alternative for interacting with a computer. Eyeudio makes use of the camera and microphone on any common computer (i.e. laptop) to control the mouse cursor with eye-tracking while carrying out specific commands with lip reading and speech recognition.'),
                     size_hint=(None, None), size=(400, 400))
-        pop.open()
+        info_popup.open()
 
-    def update_audio_log(self, dt):
-        global q
-        if not q.empty():
-            print('not empty, audio command adding')
-            last_command = q.get(block = False)
-            if self.ids.audio_text.text.count('\n') > 10:
-                self.audio_text.text = ''
-            self.ids.audio_text.text = self.ids.audio_text.text + '\n' + last_command
-        else:
-            print('audio log empty')
+    def _update_text(self, module_text, last_command, *args):
+        if module_text.text.count('\n') > 10:
+            module_text.text = ''
+        module_text.text += f'\n{last_command}'
 
-    def _update_button(self, event):
+    def _update_audio_status(self, dt, *args):
+        global AUDIO_STATUS_QUEUE
+        if (not AUDIO_STATUS_QUEUE.empty()) and (AUDIO_STATUS_QUEUE.get()):
+            self._update_button('click_audio_btn')
+
+
+    def _update_log(self, dt, *args):
+        global COMMAND_QUEUE, STATUS
+        if not COMMAND_QUEUE.empty():
+            last_command = COMMAND_QUEUE.get(block=False)
+            print('command queue not empty, {}'.format(last_command))
+
+            if STATUS["audio_on"] and not STATUS["lip_on"]:
+                self._update_text(module_text=self.ids.audio_text, last_command=last_command)
+
+            elif STATUS["lip_on"] and not STATUS["audio_on"]:
+                self._update_text(module_text=self.ids.lip_text, last_command=last_command)
+
+            elif STATUS["lip_on"] and STATUS["audio_on"]:
+                if self.selected_audio:
+                    self._update_text(module_text=self.ids.audio_text, last_command=last_command)
+                else:
+                    self._update_text(module_text=self.ids.lip_text, last_command=last_command)
+    def _open_do_you_mean_popup(self, *args):
+        '''
+            Open a popup to ask the user to select between speech recognition or lip reading output
+        '''
+        box = BoxLayout(orientation='vertical', padding=(10))
+        btn_lip = WrappedButton(text=self.current_lip_output, halign="center", font_size=20)
+        box.add_widget(btn_lip)
+        btn_lip.bind(on_release=self._select_lip)
+
+        box.add_widget(Label(text="or", font_size=30))
+
+        btn_audio = WrappedButton(text=self.current_audio_output, halign="center", font_size=20)
+        box.add_widget(btn_audio)
+        btn_audio.bind(on_release=self._select_audio)
+
+        self.do_you_mean_popup = Popup(title='Do you mean ...', title_size=(30), title_align='center', content=box, size_hint=(None, None), size=(400, 400))
+        self.do_you_mean_popup.open()
+
+    def _select_lip(self, *args):
+        global CHECKER, LIP_QUEUE, COMMAND_QUEUE
+
+        self.selected_audio = False
+
+        # Send lip output to syntax checker
+        CHECKER.execute_command(LIP_QUEUE.get())
+
+        # TODO: update COMMAND_QUEUE with the ACTUAL command being executed (not the raw input)
+        COMMAND_QUEUE.put(self.current_lip_output)
+
+        # Close popup
+        self.do_you_mean_popup.dismiss()
+
+    def _select_audio(self, *args):
+        global CHECKER, AUDIO_QUEUE, COMMAND_QUEUE
+
+        self.selected_audio = True
+
+        # Send audio output to syntax checker. TODO: Speech Recognition is always on, will need to change audio.py
+        CHECKER.execute_command(AUDIO_QUEUE.get())
+
+        # TODO: update COMMAND_QUEUE with the ACTUAL command being executed (not the raw input)
+        COMMAND_QUEUE.put(self.current_audio_output)
+
+        # Close popup
+        self.do_you_mean_popup.dismiss()
+
+    def _update_button(self, event, *args):
         '''
             Update the ON/OFF buttons and their color when the user click on
         '''
-        global status
+        global STATUS, LIP_QUEUE, AUDIO_QUEUE, COMMAND_QUEUE, CHECKER
         self.event = event
+
+        # Check for eye button click event
         if self.event == "click_eye_btn":
-            if status["eye_on"]:
+            # Turn eye button off event
+            if STATUS["eye_on"]:
                 self.ids.eye_btn.text = "OFF"
                 self.ids.eye_btn.background_color = utils.get_color_from_hex('#ED4E33')
-                status["eye_on"] = False
+                STATUS["eye_on"] = False
+
+            # Turn eye button on event
             else:
                 self.ids.eye_btn.text = "ON"
                 self.ids.eye_btn.background_color = utils.get_color_from_hex('#00A598')
-                status["eye_on"] = True
+                STATUS["eye_on"] = True
 
+        # Check for lip button click event
         elif self.event == "click_lip_btn":
-            if status["lip_on"]:
+            # Turn lip button off event
+            if STATUS["lip_on"]:
                 self.ids.lip_btn.text = "OFF"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#ED4E33')
-                status["lip_on"] = False
+                STATUS["lip_on"] = False
+
+            # Turn lip button on event
             else:
                 self.ids.lip_btn.text = "ON"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
-                status["lip_on"] = True
+                STATUS["lip_on"] = True
 
-                # temporarily prints output to console
-                lip_command, lip_words = start_lip_reading()
-                print('lip command: ', lip_command)
-                print('lip words: ', lip_words)
+                # If speech recognition is also on, open popup to ask user to choose
+                if STATUS["audio_on"]:
+                    # Clear lip and audio queue
+                    while not LIP_QUEUE.empty():
+                        LIP_QUEUE.get()
+                    while not AUDIO_QUEUE.empty():
+                        AUDIO_QUEUE.get()
 
-        elif self.event == "click_aux_btn":
-            if status["aux_on"]:
-                self.ids.aux_btn.text = "OFF"
-                self.ids.aux_btn.background_color = utils.get_color_from_hex('#ED4E33')
-                status["aux_on"] = False
+                    # Start Deep Lip Reading and save raw lip reading output
+                    lip_sentence, lip_words = start_lip_reading()
+                    self.current_lip_output = lip_sentence
+                    LIP_QUEUE.put(lip_sentence)
+
+                    # TODO: save the raw speech recognition input into self.current_audio_output
+
+                    # Start popup for user to choose lip reading or speech recognition output
+                    self._open_do_you_mean_popup()
+
+                # If only lip reading is on, send output to syntax checker
+                else:
+                    # Start Deep Lip Reading and save raw lip reading output
+                    lip_sentence, lip_words = start_lip_reading()
+                    self.current_lip_output = lip_sentence
+                    LIP_QUEUE.put(lip_sentence)
+
+                    # Syntax check raw lip reading output
+                    CHECKER.execute_command(LIP_QUEUE.get())
+
+                    # TODO: update COMMAND_QUEUE with the ACTUAL command being executed (not the raw input)
+                    COMMAND_QUEUE.put(self.current_lip_output)
+
+        # Check for audio button click event
+        elif self.event == "click_audio_btn":
+            # Turn audio button off event
+            if STATUS["audio_on"]:
+                self.ids.audio_btn.text = "OFF"
+                self.ids.audio_btn.background_color = utils.get_color_from_hex('#ED4E33')
+                STATUS["audio_on"] = False
+
+            # Turn audio button on event
             else:
-                self.ids.aux_btn.text = "ON"
-                self.ids.aux_btn.background_color = utils.get_color_from_hex('#00A598')
-                status["aux_on"] = True
+                self.ids.audio_btn.text = "ON"
+                self.ids.audio_btn.background_color = utils.get_color_from_hex('#00A598')
+                STATUS["audio_on"] = True
+
+                # If lip reading is also on, open popup to ask user to choose
+                if STATUS["lip_on"]:
+                    # Clear lip and audio queue
+                    while not LIP_QUEUE.empty():
+                        LIP_QUEUE.get()
+                    while not AUDIO_QUEUE.empty():
+                        AUDIO_QUEUE.get()
+
+                    # Start Deep Lip Reading and save raw lip reading output
+                    lip_sentence, lip_words = start_lip_reading()
+                    self.current_lip_output = lip_sentence
+                    LIP_QUEUE.put(lip_sentence)
+
+                    # TODO: save the raw speech recognition input into self.current_audio_output
+
+                    # Start popup for user to choose lip reading or speech recognition output
+                    self._open_do_you_mean_popup()
+
+                # If only speech recognition is on, send output to syntax checker
+                else:
+                    # audio.py handles sending speech recognition output to syntax checker
+                    # TODO: save the raw speech recognition input into self.current_audio_output
+                    pass
+
 
 class Application(App):
     def build(self):
@@ -108,29 +278,190 @@ class Application(App):
 
 
 if __name__ == "__main__":
-    status = {
+    STATUS = {
         "eye_on": False,
         "lip_on": False,
-        "aux_on": True
+        "audio_on": False
     }
-    root_widget = None
-    q = Queue()
-    syntax_checker = Checker()
+
+    COMMAND_QUEUE = Queue() # queue for syntax checked commands
+    AUDIO_QUEUE = Queue() # speech recognition queue
+    LIP_QUEUE = Queue() # lip reading queue
+    AUDIO_STATUS_QUEUE = Queue()
+    CHECKER = Checker() # syntax checker for lip reading and speech recognition
 
     def printOne():
-        global status
+        global STATUS
         while True:
-            if status["eye_on"]:
+            if STATUS["eye_on"]:
                 print("Eye on")
                 sleep(1)
 
     def printTwo():
-        global status
+        global STATUS
         while True:
-            if status["aux_on"]:
-                print("Aux on")
+            if STATUS["audio_on"]:
+                print("Audio on")
                 sleep(1)
 
-    audio = Audio(q, syntax_checker, None).start()
+
+    lock = Lock()
+    queue = Queue() # eye tracking queue
+
+    # # eyetracking task 1
+    # def eye_tracker(args, queue):
+    #     global face_eye
+    #     lock.acquire()
+    #     config = load_mode_config(args)
+    #     expanduser_all(config)
+    #     if config.gaze_estimator.use_dummy_camera_params:
+    #         generate_dummy_camera_params(config)
+    #     OmegaConf.set_readonly(config, True)
+
+    #     if config.face_detector.mode == 'dlib':
+    #         download_dlib_pretrained_model()
+    #     if args.mode:
+    #         if config.mode == 'MPIIGaze':
+    #             download_mpiigaze_model()
+    #         elif config.mode == 'MPIIFaceGaze':
+    #             download_mpiifacegaze_model()
+    #         elif config.mode == 'ETH-XGaze':
+    #             download_ethxgaze_model()
+
+    #     check_path_all(config)
+    #     face_eye = Demo(config)
+    #     lock.release()
+    #     face_eye.run(queue)
+
+    # # eyetracking task 2
+    # def eye_cursor():
+    #     screenWidth, screenHeight = pyautogui.size() # Get the size of the primary monitor.
+    #     currentMouseX, currentMouseY = pyautogui.position()
+    #     sleep(1) # make sure work1 can get the lock first to init the face_eye
+    #     lock.acquire()
+    #     global face_eye
+    #     CALIBRATION_INTERVAL = 3 # change this interval
+    #     CURSOR_INTERVAL = 2
+    #     lock.release()
+
+    #     # first four results is used to calibration
+    #     x_right, x_left, y_up, y_down = 0, 0, 0, 0
+    #     # min     max     min     max
+
+
+    #     #sleep here, check the switch every half second.
+    #     global STATUS
+    #     while STATUS["eye_on"] is not True:
+    #         sleep(0.5)
+
+    #     iteration = 0
+    #     while True:
+    #         x = 0
+    #         y = 0
+    #         for res in face_eye.gaze_estimator.results:
+    #             x += res[0]
+    #             y += res[1]
+    #         array = np.array(face_eye.gaze_estimator.results)
+    #         # preprocesing: np.abs(data - np.mean(data, axis=0)) > np.std(data, axis=0) and only keep the all true ones
+    #         if len(face_eye.gaze_estimator.results) == 0:
+    #             sleep(CURSOR_INTERVAL)
+    #             continue
+    #         x /= -len(face_eye.gaze_estimator.results) # change sign (right should be larger than left)
+    #         y /= len(face_eye.gaze_estimator.results)
+
+
+    #         # calibration
+    #         if iteration == 0:
+    #             print("------------------- Look Upper-left -------------------")
+    #             sleep(CALIBRATION_INTERVAL)
+    #             iteration += 1
+    #             continue
+    #         if iteration == 1: # upper-left
+    #             x_left += x
+    #             y_up += y
+    #             print("------------------- Then Look Upper-right -------------------")
+    #             sleep(CALIBRATION_INTERVAL)
+    #             iteration += 1
+    #             continue
+    #         elif iteration == 2: # upper-right
+    #             x_right += x
+    #             y_up += y
+    #             print("------------------- Then Look lower-right -------------------")
+    #             sleep(CALIBRATION_INTERVAL)
+    #             iteration += 1
+    #             continue
+    #         elif iteration == 3: # lower-right
+    #             x_right += x
+    #             y_down += y
+    #             print("------------------- Then Look lower-left -------------------")
+    #             sleep(CALIBRATION_INTERVAL)
+    #             iteration += 1
+    #             continue
+    #         elif iteration == 4: # lower-left
+    #             x_left += x
+    #             y_down += y
+    #             print("-------------------------------------- Finished --------------------------------------")
+    #             sleep(CALIBRATION_INTERVAL)
+    #             iteration += 1
+    #             continue
+    #         elif iteration == 5:
+    #             x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
+    #             print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
+
+    #         if STATUS["eye_on"]:
+    #             # scale x and y
+    #             x = (x - x_left) / (x_right - x_left) * (screenWidth)
+    #             y = (y - y_up) / (y_down - y_up) * (screenHeight)
+    #             print("\n x:{}   y: {}".format(x, y))
+
+    #             if x <= 0:
+    #                 x = 1
+    #             if x >= screenWidth:
+    #                 x = screenWidth - 1
+    #             if y <= 0:
+    #                 y = 1
+    #             if y >= screenHeight:
+    #                 y = screenHeight - 1
+
+    #             pyautogui.moveTo(x, y) # x, y  positive number
+
+    #             sleep(CURSOR_INTERVAL)
+    #             iteration += 1
+
+    # # for lip-reading usage
+    # def show_stored_frame(queue):
+    #     while True:
+    #         if not queue.empty():
+    #             # 1. get a frame and it's sequential id.
+    #             frame, id = queue.get()
+    #             # 2. try to show it
+    #             cv2.imshow("current frame", frame)
+    #             key = cv2.waitKey(1)
+    #             if key == 27: #'q'
+    #                 cv2.destroyAllWindows()
+
+    #### --- Speech Recognition --- ####
+    audio = Audio(AUDIO_QUEUE, COMMAND_QUEUE, AUDIO_STATUS_QUEUE, CHECKER, None).start()
+
+    # ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
+    # #### --- Eye Tracking --- ####
+    # args = parse_args()
+    # task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
+    # task_eye_tracker.start()
+
+    # task_eye_cursor = Thread(target=eye_cursor, args=())
+    # task_eye_cursor.start()
+
+    # #### --- Lip Reading --- ####
+    # ## To Jordan:
+    # # frames are stored a message queue
+    # # task_show_frame is an example
+    # task_show_frame = Thread(target=show_stored_frame, args=(queue,))
+    # task_show_frame.start()
+
     app = Application()
     app.run()
+
+    # def exit_handler():
+    #     cv2.destroyAllWindows()
+    # atexit.register(exit_handler)

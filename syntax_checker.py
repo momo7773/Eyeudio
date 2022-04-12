@@ -1,46 +1,68 @@
-import pysndfile
 import osascript
-import sounddevice as sd
-import librosa
 import subprocess
 import pyautogui
-import keyboard
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 
 class Checker(object):
     def __init__(self):
         self.command_list = []
-        self.tree = Tree()
         self.prepare_command_list()
 
     def prepare_command_list(self):
-        command1 = ["turn up volume", "turn_up_volume", False]
-        command2 = ["turn down volume", "turn_down_volume", False]
-        command5 = ["set volume to", "set_volume", True]
-        command3 = ["open", "open_app", True]
-        command4 = ["click", "click", False]
-        command6 = ["open new tab", "open_new_tab", False]
-        command7 = ["next tab", "next_tab", False]
-        command8 = ["open new window", "open_new_window", False]
+        command1 = ["turn up volume", "turn_up_volume", -1]
+        command2 = ["turn down volume", "turn_down_volume", -1]
+        # command3 = ["open", "open_app", True]
+        command4 = ["single click", "click", -1]
+        # command5 = ["set volume to", "set_volume", True]
+        command6 = ["open new tab", "add_new_tab", -1]
+        command7 = ["next tab", "next_tab", -1]
+        command8 = ["open new window", "open_new_window", -1]
+        command9 = ["open chrome", "open_app", 1]
+        command10 = ["open microsoft powerpoint", "open_app", 1]
+        command11 = ["open notion", "open_app", 1]
         self.command_list.append(command1)
         self.command_list.append(command2)
-        self.command_list.append(command3)
+        # self.command_list.append(command3)
         self.command_list.append(command4)
-        self.command_list.append(command5)
+        # self.command_list.append(command5)
         self.command_list.append(command6)
         self.command_list.append(command7)
         self.command_list.append(command8)
-        for command in self.command_list:
-            self.tree.add_command(command)
+        self.command_list.append(command9)
+        self.command_list.append(command10)
+        self.command_list.append(command11)
 
-    def execute_command(self, command):
-        valid, terminal, arguments = self.tree.check_command(command)
+        # for command in self.command_list:
+        #     self.tree.add_command(command)
+
+    def execute_command(self, tokens):
+        valid, command = self.validate_command(tokens.lower())
         if valid:
-            if arguments is not None:
-                terminal.add_arguments(arguments)
-            terminal.call_command()
+            self.call_command(command[2], command[1], command[0])
+            return command[0]
         else:
+            #TODO: change to pop up
             print('Not valid command, skip')
+    def validate_command(self, tokens):
+        confident_command = []
+        confidence = 0
+        for command in self.command_list:
+            conf = fuzz.partial_ratio(command[0], tokens)
+            if conf > confidence:
+                confidence = conf
+                confident_command = command
+        if confidence >= 80:
+            return True, confident_command
+        return False, None
 
+    def call_command(self, argument_start_index, function_call, command):
+        if argument_start_index == -1:
+            globals()[function_call]()
+        else:
+            arguments = ' '.join(command.split()[argument_start_index :])
+            globals()[function_call](arguments)
+        return command
 
 class Tree(object):
     def __init__(self):
@@ -124,7 +146,7 @@ class TerminalNode(Node):
 def text_normalizer(text):
     text = text.upper()
     return text.translate(str.maketrans('', '', string.punctuation))
-    
+
 def click():
     print('call click')
     pyautogui.click()
@@ -187,4 +209,4 @@ def add_new_window():
 def next_tab():
     pyautogui.hotkey('command', 'tab', interval=0.25)
 
-application_mapping = {'CHROME': 'Google Chrome','MICROSOFT POWERPOINT': 'Microsoft PowerPoint', 'POWERPOINT': 'Microsoft PowerPoint', 'NOTION': 'Notion'}
+application_mapping = {'chrome': 'Google Chrome','microsoft powerpoint': 'Microsoft PowerPoint', 'powerpoint': 'Microsoft PowerPoint', 'notion': 'Notion'}

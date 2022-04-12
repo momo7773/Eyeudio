@@ -41,6 +41,9 @@ python -m pip install "kivy[base]" kivy_examples
 
 # For Eye Tracking
 
+# For Syntax Checker
+python -m pip install pyautogui
+python -m pip install osascript
 ```
 
 **Note:** We need to activate this environment by running `conda activate lip_env_3.7.7` every time opening up a new terminal.
