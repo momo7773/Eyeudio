@@ -32,6 +32,12 @@ g_frame_count = 0 # for labeling output cropped frames
 g_message_to_display = 'Starting...' # for updating the real time feed
 g_output_queue = deque(maxlen=max_frames_to_hold)
 
+def initialize_lipreading_variables():
+    global g_exit_flag, g_frame_count, g_output_queue
+    g_exit_flag = 0 # for signaling to threads to exit
+    g_frame_count = 0 # for labeling output cropped frames
+    g_output_queue.clear()
+
 class mouth_crop_thread (threading.Thread):
    def __init__(self, threadID, name, workQueue):
         threading.Thread.__init__(self)
@@ -54,16 +60,6 @@ class mouth_crop_thread (threading.Thread):
 
 def get_copy_of_output_frames():
     return copy.deepcopy(g_output_queue)
-
-def process_lip_frame_loop(lip_reading_deque):
-    while True:
-        if (len(lip_reading_deque) > 0): # only process_frame if there exists a frame to process
-            process_frame(lip_reading_deque)
-
-            global g_frame_count
-            # print("lip processing frame %s" % (g_frame_count)) # debugging
-        else:
-            time.sleep(0.2) # arbitrary time to wait if no frame to pop
 
 def process_frame(lip_reading_deque):
     global g_frame_count, g_message_to_display, g_output_queue
@@ -161,10 +157,7 @@ def process_frame(lip_reading_deque):
         # print("Mouth is not detectable. ...") # debugging
 
 def record_and_crop():
-    global g_exit_flag, g_frame_count, g_output_queue
-    g_exit_flag = 0 # for signaling to threads to exit
-    g_frame_count = 0 # for labeling output cropped frames
-    g_output_queue.clear()
+    initialize_lipreading_variables()
 
     # Init threads
     threadList = ["Thread-1"] # Can add threads by adding to this list

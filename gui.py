@@ -32,8 +32,8 @@ from collections import deque
 # EYEUDIO IMPORTS =============================================
 # from audio import * # audio uncomment
 # from syntax_checker import * # audio uncomment
-# from lip_reading.start_lip_reading import start_lip_reading #lip_reading uncomment
-# from lip_reading.lip_preprocessing.record_and_crop_video import process_lip_frame_loop #lip_reading uncomment
+from lip_reading.start_lip_reading import start_lip_reading #lip_reading uncomment
+from lip_reading.lip_preprocessing.record_and_crop_video import process_frame, initialize_lipreading_variables #lip_reading uncomment
 from eyetracking.main import parse_args, load_mode_config
 from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
@@ -113,15 +113,16 @@ class EyeudioGUI(Widget):
                 self.ids.lip_btn.text = "OFF"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#ED4E33')
                 status["lip_on"] = False
-            else:
-                self.ids.lip_btn.text = "ON"
-                self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
-                status["lip_on"] = True
 
                 # temporarily prints output to console
                 lip_command, lip_words = start_lip_reading()
                 print('lip command: ', lip_command)
                 print('lip words: ', lip_words)
+            else:
+                initialize_lipreading_variables() # reinitialize the start lip vars (clear deque) before cropping
+                self.ids.lip_btn.text = "ON"
+                self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
+                status["lip_on"] = True
 
         elif self.event == "click_aux_btn":
             if status["aux_on"]:
@@ -281,6 +282,16 @@ if __name__ == "__main__":
                 sleep(CURSOR_INTERVAL)
                 iteration += 1
 
+    # lipreading task 1 (cropping)
+    def process_lip_frame_loop(lip_reading_deque):
+        while True:
+            # only process_frame if lipreading is on, and there exists a frame to process
+            if status["lip_on"] and (len(lip_reading_deque) > 0):
+                process_frame(lip_reading_deque)
+                # print("lip processing frame") # debugging
+            else:
+                time.sleep(0.2) # arbitrary time to wait if no frame to pop
+
     #### --- Speech Recognition --- ####
     # audio = Audio(q, syntax_checker, None).start() # audio uncomment
 
@@ -294,8 +305,8 @@ if __name__ == "__main__":
     task_eye_cursor.start()
 
     #### --- Lip Reading --- ####
-    # task_process_lip_frames = Thread(target=process_lip_frame_loop, args=(lip_reading_deque,))
-    # task_process_lip_frames.start()
+    task_process_lip_frames = Thread(target=process_lip_frame_loop, args=(lip_reading_deque,))
+    task_process_lip_frames.start()
 
     app = Application()
     app.run()
