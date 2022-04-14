@@ -10,19 +10,17 @@
 * Yaowei Ma    (yaowei_ma@berkeley.edu)
 * Hoang Nguyen (hoang_nguyen@berkeley.edu)
 
-## Setup environment
+## Setup environment (Windows 10)
 
 ### Step 1: Install Anaconda: https://docs.anaconda.com/anaconda/install/index.html
 
 ### Step 2: Create and activate a Python 3.7.7 environment, install packages
 ```bash
-conda create -n lip_env_3.7.7 python=3.7.7
-conda activate lip_env_3.7.7
+conda create -n eyeudio_env_3.7.7 python=3.7.7
+conda activate eyeudio_env_3.7.7
 
-# For Lip Preprocessing
+# For Lip Preprocessing/Deep Lip Reading
 conda install -c conda-forge opencv=4.5.3 dlib=19.22.0 sk-video=1.1.10
-
-# For Deep Lip Reading
 python -m pip install tensorflow-gpu
 python -m pip install numpy
 python -m pip install av
@@ -37,16 +35,19 @@ python -m pip install tensorflow_addons
 # For Kivy (GUI)
 python -m pip install "kivy[base]" kivy_examples
 
-# For Speech Recognition
+# For Speech Recognition/Syntax Checker
+python -m pip install SpeechRecognition
+python -m pip install pyautogui
+python -m pip install osascript
+python -m pip install fuzzywuzzy
+conda install -c conda-forge python-levenshtein
+python -m pip install .\PyAudio-0.2.11-cp37-cp37m-win_amd64.whl
 
 # For Eye Tracking
 
-# For Syntax Checker
-python -m pip install pyautogui
-python -m pip install osascript
 ```
 
-**Note:** We need to activate this environment by running `conda activate lip_env_3.7.7` every time opening up a new terminal.
+**Note:** We need to activate this environment by running `conda activate eyeudio_env_3.7.7` every time opening up a new terminal.
 
 **Note:** This is the installation guide for Windows 10.
 

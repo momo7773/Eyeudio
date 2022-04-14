@@ -1,23 +1,22 @@
-import time
-import torch
 import string
 import speech_recognition as sr
-#from espnet_model_zoo.downloader import ModelDownloader
-#from espnet2.bin.asr_inference import Speech2Text
-from kivy.clock import Clock
-#import soundfile (M1)
-#import pysndfile (Regular)
-#import osascript
-import sounddevice as sd
-#import librosa
-import subprocess
 import threading
-import queue
-import pyautogui
-#import keyboard
-from syntax_checker import *
-from scipy.io.wavfile import write
-
+# import time
+# import torch
+# from espnet_model_zoo.downloader import ModelDownloader
+# from espnet2.bin.asr_inference import Speech2Text
+# from kivy.clock import Clock
+# import soundfile (M1)
+# import pysndfile (Regular)
+# import osascript
+# import sounddevice as sd
+# import librosa
+# import subprocess
+# import queue
+# import pyautogui
+# import keyboard
+# from syntax_checker import *
+# from scipy.io.wavfile import write
 
 
 def text_normalizer(text):

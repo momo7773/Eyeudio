@@ -25,9 +25,9 @@ from multiprocessing import Process, Queue
 # from omegaconf import DictConfig, OmegaConf
 from threading import Thread, Lock
 from time import sleep, ctime
-from audio import *
+from audio import Audio
 from syntax_checker import Checker
-# from lip_reading.start_lip_reading import start_lip_reading
+from lip_reading.start_lip_reading import start_lip_reading
 # from eyetracking.main import parse_args, load_mode_config
 # from eyetracking.demo import Demo
 # from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
@@ -88,9 +88,10 @@ class EyeudioGUI(Widget):
         '''
             Open a popup when a user click on the "More Info" button
         '''
-        info_popup = Popup(title='Eyeudio Project', title_size=(30), title_align='center',
-                    content=WrappedLabel(text='Authors: Hoang Nguyen, Yiqing Tao, Kanglan Tang, Jordan Wong, Yaowei Ma, Frank Cai, Vincent Wang, Ananth Goyal\n\nBy 2040, over 78 million people in the US are projected to experience hand mobility limitations such as Arthritis or Repetitive Strain Injury (RSI), which affect their ability to perform computer-related tasks. The Assistive Eyeudio Control Team is developing an affordable hands-free alternative for interacting with a computer. Eyeudio makes use of the camera and microphone on any common computer (i.e. laptop) to control the mouse cursor with eye-tracking while carrying out specific commands with lip reading and speech recognition.'),
-                    size_hint=(None, None), size=(400, 400))
+        info_popup = Popup(title='Eyeudio Application Help', title_size=(30), title_align='center',
+                           content=WrappedLabel(text='Activate Speech Recognition: Say "Start Speech Recognition"\nActivate Lip Reading: Say "Start Lip Reading"\nActivate Eye Tracking: Say "Start Eye Tracking"\n',
+                                                font_size=14),
+                           size_hint=(None, None), size=(400, 400))
         info_popup.open()
 
     def _update_text(self, module_text, last_command, *args):
@@ -121,6 +122,7 @@ class EyeudioGUI(Widget):
                     self._update_text(module_text=self.ids.audio_text, last_command=last_command)
                 else:
                     self._update_text(module_text=self.ids.lip_text, last_command=last_command)
+
     def _open_do_you_mean_popup(self, *args):
         '''
             Open a popup to ask the user to select between speech recognition or lip reading output
