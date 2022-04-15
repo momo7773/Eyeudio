@@ -69,9 +69,10 @@ class Audio(threading.Thread):
                     self.audio_status_queue.put(True)
                     print('start, put into queue')
                 elif audio_start_flag:
-                    cmd = self.checker.execute_command(text)
-                    if cmd is not None:
-                        self.command_queue.put(cmd)
+                    pass
+                    # cmd = self.checker.execute_command(text)
+                    # if cmd is not None:
+                    #     self.command_queue.put(cmd)
                     #audio_start_flag = False
                 else:
                     print('audio flag is false, keep listening')

@@ -94,16 +94,15 @@ class EyeudioGUI(Widget):
                            size_hint=(None, None), size=(400, 400))
         info_popup.open()
 
-    def _update_text(self, module_text, last_command, *args):
-        if module_text.text.count('\n') > 10:
-            module_text.text = ''
-        module_text.text += f'\n{last_command}'
-
     def _update_audio_status(self, dt, *args):
         global AUDIO_STATUS_QUEUE
         if (not AUDIO_STATUS_QUEUE.empty()) and (AUDIO_STATUS_QUEUE.get()):
             self._update_button('click_audio_btn')
 
+    def _update_text(self, module_text, last_command, *args):
+        if module_text.text.count('\n') > 10:
+            module_text.text = ''
+        module_text.text += f'\n{last_command}'
 
     def _update_log(self, dt, *args):
         global COMMAND_QUEUE, STATUS
@@ -142,29 +141,27 @@ class EyeudioGUI(Widget):
         self.do_you_mean_popup.open()
 
     def _select_lip(self, *args):
-        global CHECKER, LIP_QUEUE, COMMAND_QUEUE
+        global CHECKER, COMMAND_QUEUE
 
         self.selected_audio = False
 
-        # Send lip output to syntax checker
-        CHECKER.execute_command(LIP_QUEUE.get())
-
-        # TODO: update COMMAND_QUEUE with the ACTUAL command being executed (not the raw input)
-        COMMAND_QUEUE.put(self.current_lip_output)
+        # Send lip output to syntax checker and update COMMAND_QUEUE
+        cmd = CHECKER.execute_command(self.current_lip_output)
+        if cmd is not None:
+            COMMAND_QUEUE.put(cmd)
 
         # Close popup
         self.do_you_mean_popup.dismiss()
 
     def _select_audio(self, *args):
-        global CHECKER, AUDIO_QUEUE, COMMAND_QUEUE
+        global CHECKER, COMMAND_QUEUE
 
         self.selected_audio = True
 
-        # Send audio output to syntax checker. TODO: Speech Recognition is always on, will need to change audio.py
-        CHECKER.execute_command(AUDIO_QUEUE.get())
-
-        # TODO: update COMMAND_QUEUE with the ACTUAL command being executed (not the raw input)
-        COMMAND_QUEUE.put(self.current_audio_output)
+        # Send audio output to syntax checker and update COMMAND_QUEUE
+        cmd = CHECKER.execute_command(self.current_audio_output)
+        if cmd is not None:
+            COMMAND_QUEUE.put(cmd)
 
         # Close popup
         self.do_you_mean_popup.dismiss()
@@ -214,10 +211,11 @@ class EyeudioGUI(Widget):
 
                     # Start Deep Lip Reading and save raw lip reading output
                     lip_sentence, lip_words = start_lip_reading()
-                    self.current_lip_output = lip_sentence
                     LIP_QUEUE.put(lip_sentence)
+                    self.current_lip_output = LIP_QUEUE.get()
 
-                    # TODO: save the raw speech recognition input into self.current_audio_output
+                    # Save the raw speech recognition input into self.current_audio_output
+                    self.current_audio_output = AUDIO_QUEUE.get()
 
                     # Start popup for user to choose lip reading or speech recognition output
                     self._open_do_you_mean_popup()
@@ -226,14 +224,13 @@ class EyeudioGUI(Widget):
                 else:
                     # Start Deep Lip Reading and save raw lip reading output
                     lip_sentence, lip_words = start_lip_reading()
-                    self.current_lip_output = lip_sentence
                     LIP_QUEUE.put(lip_sentence)
+                    self.current_lip_output = LIP_QUEUE.get()
 
                     # Syntax check raw lip reading output
-                    CHECKER.execute_command(LIP_QUEUE.get())
-
-                    # TODO: update COMMAND_QUEUE with the ACTUAL command being executed (not the raw input)
-                    COMMAND_QUEUE.put(self.current_lip_output)
+                    cmd = CHECKER.execute_command(self.current_lip_output)
+                    if cmd is not None:
+                        COMMAND_QUEUE.put(cmd)
 
         # Check for audio button click event
         elif self.event == "click_audio_btn":
@@ -259,19 +256,24 @@ class EyeudioGUI(Widget):
 
                     # Start Deep Lip Reading and save raw lip reading output
                     lip_sentence, lip_words = start_lip_reading()
-                    self.current_lip_output = lip_sentence
                     LIP_QUEUE.put(lip_sentence)
+                    self.current_lip_output = LIP_QUEUE.get()
 
                     # TODO: save the raw speech recognition input into self.current_audio_output
+                    self.current_audio_output = AUDIO_QUEUE.get()
 
                     # Start popup for user to choose lip reading or speech recognition output
                     self._open_do_you_mean_popup()
 
                 # If only speech recognition is on, send output to syntax checker
                 else:
-                    # audio.py handles sending speech recognition output to syntax checker
-                    # TODO: save the raw speech recognition input into self.current_audio_output
-                    pass
+                    # Save the raw speech recognition input into self.current_audio_output
+                    self.current_audio_output = AUDIO_QUEUE.get()
+
+                    # Syntax check raw audio reading output
+                    cmd = CHECKER.execute_command(self.current_audio_output)
+                    if cmd is not None:
+                        COMMAND_QUEUE.put(cmd)
 
 
 class Application(App):
