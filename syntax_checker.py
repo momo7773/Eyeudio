@@ -18,7 +18,7 @@ class Checker(object):
         # command5 = ["set volume to", "set_volume", True]
         command6 = ["open new tab", "add_new_tab", -1]
         command7 = ["next tab", "next_tab", -1]
-        command8 = ["open new window", "open_new_window", -1]
+        command8 = ["open new window", "add_new_window", -1]
         command9 = ["open chrome", "open_chrome", -1]
         command10 = ["open microsoft powerpoint", "open_app", 1]
         command11 = ["open notion", "open_app", 1]
