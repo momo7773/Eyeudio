@@ -106,8 +106,10 @@ class EyeudioGUI(Widget):
 
     def _update_audio_status(self, dt, *args):
         global AUDIO_STATUS_QUEUE
-        if (not AUDIO_STATUS_QUEUE.empty()) and (AUDIO_STATUS_QUEUE.get()):
+        if (not AUDIO_STATUS_QUEUE.empty()):
+            AUDIO_STATUS_QUEUE.get()
             self._update_button('click_audio_btn')
+        
 
     def _update_text(self, module_text, last_command, *args):
         if module_text.text.count('\n') > 10:
