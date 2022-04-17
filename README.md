@@ -41,7 +41,7 @@ python -m pip install pyautogui
 python -m pip install osascript
 python -m pip install fuzzywuzzy
 conda install -c conda-forge python-levenshtein
-python -m pip install .\PyAudio-0.2.11-cp37-cp37m-win_amd64.whl
+python -m pip install ./PyAudio-0.2.11-cp37-cp37m-win_amd64.whl
 
 # For Eye Tracking
 
