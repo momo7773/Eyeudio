@@ -92,7 +92,7 @@ class EyeudioGUI(Widget):
         self.selected_audio = True
 
     def update_cursor_position(self, dt):
-        self.cursor_position = "X: {:.0f}\nY: {:.0f}".format(status["x"], status["y"])
+        self.cursor_position = "X: {:.0f}\nY: {:.0f}".format(STATUS["x"], STATUS["y"])
 
     def _open_info_popup(self, *args):
         '''
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     STATUS = {
         "eye_on": False,
         "lip_on": False,
-        "audio_on": False
+        "audio_on": False,
         "x": 0,
         "y": 0
     }    
@@ -351,8 +351,8 @@ if __name__ == "__main__":
 
 
         #sleep here, check the switch every half second.
-        global status
-        while status["eye_on"] is not True:
+        global STATUS
+        while STATUS["eye_on"] is not True:
             sleep(0.5)
 
         iteration = 0
@@ -415,13 +415,13 @@ if __name__ == "__main__":
                 x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
                 print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
 
-            if status["eye_on"]:
+            if STATUS["eye_on"]:
                 # scale x and y
                 x = (x - x_left) / (x_right - x_left) * (screenWidth)
                 y = (y - y_up) / (y_down - y_up) * (screenHeight)
                 print("\n x:{}   y: {}".format(x, y))
-                status["x"] = x
-                status["y"] = y
+                STATUS["x"] = x
+                STATUS["y"] = y
 
                 if x <= 0:
                     x = 1
@@ -441,7 +441,7 @@ if __name__ == "__main__":
     def process_lip_frame_loop(lip_reading_deque):
         while True:
             # only process_frame if lipreading is on, and there exists a frame to process
-            if status["lip_on"] and (len(lip_reading_deque) > 0):
+            if STATUS["lip_on"] and (len(lip_reading_deque) > 0):
                 process_frame(lip_reading_deque)
                 # print("lip processing frame") # debugging
             else:
