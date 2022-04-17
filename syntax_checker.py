@@ -3,6 +3,7 @@ import subprocess
 import pyautogui
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+import os
 
 class Checker(object):
     def __init__(self):
@@ -18,7 +19,7 @@ class Checker(object):
         command6 = ["open new tab", "add_new_tab", -1]
         command7 = ["next tab", "next_tab", -1]
         command8 = ["open new window", "open_new_window", -1]
-        command9 = ["open chrome", "open_app", 1]
+        command9 = ["open chrome", "open_chrome", -1]
         command10 = ["open microsoft powerpoint", "open_app", 1]
         command11 = ["open notion", "open_app", 1]
         self.command_list.append(command1)
@@ -189,6 +190,9 @@ def set_volume(values):
 
 def is_open_command(tokens):
     return True if tokens[0] == 'OPEN' else False
+
+def open_chrome():
+    os.system('start chrome')
 
 def open_app(app):
     # TODO: find whether the app exists (using regex?)
