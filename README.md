@@ -44,6 +44,7 @@ conda install -c conda-forge python-levenshtein
 python -m pip install ./PyAudio-0.2.11-cp37-cp37m-win_amd64.whl
 
 # For Eye Tracking
+pip install -r requirements.txt
 
 ```
 
