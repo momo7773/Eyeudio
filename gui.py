@@ -48,6 +48,9 @@ Builder.load_file('template_gui.kv')
 Window.size = (800, 500) # Window size (x, y)
 
 
+RED = '#ED4E33'
+GREEN = '#00A598'
+
 class WrappedLabel(Label):
     '''
         Kivy's Label with automatic word wrap
@@ -189,22 +192,34 @@ class EyeudioGUI(Widget):
         if self.event == "click_eye_btn":
             # Turn eye button off event
             if STATUS["eye_on"]:
-                self.ids.eye_btn.text = "OFF"
-                self.ids.eye_btn.background_color = utils.get_color_from_hex('#ED4E33')
+                self.ids.eye_status.text = "OFF"
+                self.ids.eye_status.color = utils.get_color_from_hex(RED)
+
+                self.ids.eye_btn.text = "TURN ON"
+                self.ids.eye_btn.background_color = utils.get_color_from_hex(GREEN)
+
                 STATUS["eye_on"] = False
 
             # Turn eye button on event
             else:
-                self.ids.eye_btn.text = "ON"
-                self.ids.eye_btn.background_color = utils.get_color_from_hex('#00A598')
+                self.ids.eye_status.text = "ON"
+                self.ids.eye_status.color = utils.get_color_from_hex(GREEN)
+
+                self.ids.eye_btn.text = "TURN OFF"
+                self.ids.eye_btn.background_color = utils.get_color_from_hex(RED)
+
                 STATUS["eye_on"] = True
 
         # Check for lip button click event
         elif self.event == "click_lip_btn":
-            # Turn lip button off event
+            # Turn lip button off event, start recognize lip command
             if STATUS["lip_on"]:
+                self.ids.lip_status.text = "OFF"
+                self.ids.lip_status.color = utils.get_color_from_hex(RED)
+
                 self.ids.lip_btn.text = "RECORD"
-                self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
+                self.ids.lip_btn.background_color = utils.get_color_from_hex(GREEN)
+
                 STATUS["lip_on"] = False
 
                 # If speech recognition is also on, open popup to ask user to choose
@@ -240,29 +255,41 @@ class EyeudioGUI(Widget):
                     if cmd is not None:
                         COMMAND_QUEUE.put(cmd)
 
-            # Turn lip button on event
+            # Turn lip button on event, start cropping
             else:
                 initialize_lipreading_variables() # reinitialize the start lip vars (clear deque) before cropping
+                self.ids.lip_status.text = "ON"
+                self.ids.lip_status.color = utils.get_color_from_hex(GREEN)
+
                 self.ids.lip_btn.text = "STOP"
-                self.ids.lip_btn.background_color = utils.get_color_from_hex('#ED4E33')
+                self.ids.lip_btn.background_color = utils.get_color_from_hex(RED)
+
                 STATUS["lip_on"] = True
 
         # Check for audio button click event
         elif self.event == "click_audio_btn":
             # Turn audio button off event
             if STATUS["audio_on"]:
-                self.ids.audio_btn.text = "OFF"
-                self.ids.audio_btn.background_color = utils.get_color_from_hex('#ED4E33')
+                self.ids.audio_status.text = "OFF"
+                self.ids.audio_status.color = utils.get_color_from_hex(RED)
+
+                self.ids.audio_btn.text = "TURN ON"
+                self.ids.audio_btn.background_color = utils.get_color_from_hex(GREEN)
+
                 STATUS["audio_on"] = False
 
             # Turn audio button on event
             else:
-                self.ids.audio_btn.text = "ON"
-                self.ids.audio_btn.background_color = utils.get_color_from_hex('#00A598')
+                self.ids.audio_status.text = "ON"
+                self.ids.audio_status.color = utils.get_color_from_hex(GREEN)
+
+                self.ids.audio_btn.text = "TURN OFF"
+                self.ids.audio_btn.background_color = utils.get_color_from_hex(RED)
+
                 STATUS["audio_on"] = True
 
                 # If lip reading is also on, open popup to ask user to choose
-                if STATUS["lip_on"]:
+                if not STATUS["lip_on"]:
                     # Clear lip and audio queue
                     while not LIP_QUEUE.empty():
                         LIP_QUEUE.get()

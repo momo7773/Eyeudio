@@ -44,8 +44,18 @@ conda install -c conda-forge python-levenshtein
 python -m pip install ./PyAudio-0.2.11-cp37-cp37m-win_amd64.whl
 
 # For Eye Tracking
-pip install -r requirements.txt
-
+conda install pytorch torchvision torchaudio cpuonly -c pytorch
+python -m pip install omegaconf
+python -m pip install face-alignment
+python -m pip install fvcore
+python -m pip install pandas
+python -m pip install pyyaml
+python -m pip install scipy
+python -m pip install tensorboardX
+python -m pip install yacs
+python -m pip install mediapipe
+python -m pip install timm
+# pip install -r requirements.txt
 ```
 
 **Note:** We need to activate this environment by running `conda activate eyeudio_env_3.7.7` every time opening up a new terminal.

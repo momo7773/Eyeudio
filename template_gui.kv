@@ -1,6 +1,13 @@
 #:import utils kivy.utils
 #:import WrappedLabel gui
 
+#:set BLUE '#003262'
+#:set RED '#ED4E33'
+#:set GREEN '#00A598'
+#:set FOG '#DDD5C7'
+#:set GRAY '#EEEEEE'
+#:set YELLOW '#C4820E'
+
 <EyeudioGUI>
     BoxLayout:
         orientation: "horizontal"
@@ -31,7 +38,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#003262')
+                            rgba: utils.get_color_from_hex(BLUE)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -43,7 +50,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#C4820E')
+                            rgba: utils.get_color_from_hex(YELLOW)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -69,7 +76,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#003262')
+                            rgba: utils.get_color_from_hex(BLUE)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -81,7 +88,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#DDD5C7')
+                            rgba: utils.get_color_from_hex(FOG)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -91,21 +98,22 @@
                     size_hint_y: None
                     height: 35
                 Label:
+                    id: eye_status
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#DDD5C7')
+                            rgba: utils.get_color_from_hex(FOG)
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "Disabled/Ready"
+                    text: "OFF"
                     font_size: 16
-                    color: (0,0,0,1)
+                    color: utils.get_color_from_hex(RED)
                     size_hint_y: None
                     height: 35
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#EEEEEE')
+                            rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -117,7 +125,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#EEEEEE')
+                            rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -128,8 +136,8 @@
                 Button:
                     id: eye_btn
                     background_normal: ''
-                    background_color: utils.get_color_from_hex('#ED4E33')
-                    text: "OFF"
+                    background_color: utils.get_color_from_hex(GREEN)
+                    text: "TURN ON"
                     font_size: 30
                     size_hint_y: None
                     height: 100
@@ -148,7 +156,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#003262')
+                            rgba: utils.get_color_from_hex(BLUE)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -160,7 +168,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#DDD5C7')
+                            rgba: utils.get_color_from_hex(FOG)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -170,21 +178,22 @@
                     size_hint_y: None
                     height: 35
                 Label:
+                    id: lip_status
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#DDD5C7')
+                            rgba: utils.get_color_from_hex(FOG)
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "Disabled/Ready"
+                    text: "OFF"
                     font_size: 16
-                    color: (0,0,0,1)
+                    color: utils.get_color_from_hex(RED)
                     size_hint_y: None
                     height: 35
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#EEEEEE')
+                            rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -196,7 +205,7 @@
                 WrappedLabel:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#EEEEEE')
+                            rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -208,7 +217,7 @@
                 Button:
                     id: lip_btn
                     background_normal: ''
-                    background_color: utils.get_color_from_hex('#ED4E33')
+                    background_color: utils.get_color_from_hex(GREEN)
                     text: "RECORD"
                     font_size: 30
                     size_hint_y: None
@@ -228,7 +237,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#003262')
+                            rgba: utils.get_color_from_hex(BLUE)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -240,7 +249,7 @@
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#DDD5C7')
+                            rgba: utils.get_color_from_hex(FOG)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -250,21 +259,22 @@
                     size_hint_y: None
                     height: 35
                 Label:
+                    id: audio_status
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#DDD5C7')
+                            rgba: utils.get_color_from_hex(FOG)
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "Ready"
+                    text: "OFF"
                     font_size: 16
-                    color: (0,0,0,1)
+                    color: utils.get_color_from_hex(RED)
                     size_hint_y: None
                     height: 35
                 Label:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#EEEEEE')
+                            rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -276,7 +286,7 @@
                 WrappedLabel:
                     canvas.before:
                         Color:
-                            rgba: utils.get_color_from_hex('#EEEEEE')
+                            rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
@@ -288,8 +298,8 @@
                 Button:
                     id: audio_btn
                     background_normal: ''
-                    background_color: utils.get_color_from_hex('#ED4E33')
-                    text: "OFF"
+                    background_color: utils.get_color_from_hex(GREEN)
+                    text: "TURN ON"
                     font_size: 30
                     size_hint_y: None
                     height: 100
