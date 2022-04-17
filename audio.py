@@ -47,7 +47,7 @@ class Audio(threading.Thread):
 
             print('start recording')
             with sr.Microphone() as source:
-                myrecording = self.recognizer.listen(source, timeout = seconds)
+                myrecording = self.recognizer.listen(source, timeout = seconds, phrase_time_limit = seconds)
             #myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=1)
             #sd.wait()  # Wait until recording is finished
 
