@@ -201,12 +201,12 @@ def open_app(app):
         print('Not in available application')
 
 def add_new_tab():
-    pyautogui.hotkey('command', 't', interval=0.25)
+    pyautogui.hotkey('ctrl', 't', interval=0.25)
 
 def add_new_window():
-    pyautogui.hotkey('command', 'n', interval=0.25)
+    pyautogui.hotkey('ctrl', 'n', interval=0.25)
 
 def next_tab():
-    pyautogui.hotkey('command', 'tab', interval=0.25)
+    pyautogui.hotkey('ctrl', 'tab', interval=0.25)
 
 application_mapping = {'chrome': 'Google Chrome','microsoft powerpoint': 'Microsoft PowerPoint', 'powerpoint': 'Microsoft PowerPoint', 'notion': 'Notion'}
