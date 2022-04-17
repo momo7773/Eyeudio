@@ -11,8 +11,8 @@ class Checker(object):
         self.prepare_command_list()
 
     def prepare_command_list(self):
-        command1 = ["turn up volume", "turn_up_volume", -1]
-        command2 = ["turn down volume", "turn_down_volume", -1]
+        command1 = ["turn up volume", "turn_up_volume_windows", -1]
+        command2 = ["turn down volume", "turn_down_volume_windows", -1]
         # command3 = ["open", "open_app", True]
         command4 = ["single click", "click", -1]
         # command5 = ["set volume to", "set_volume", True]
@@ -22,6 +22,9 @@ class Checker(object):
         command9 = ["open chrome", "open_chrome", -1]
         command10 = ["open microsoft powerpoint", "open_app", 1]
         command11 = ["open notion", "open_app", 1]
+        command12 = ["larger", "zoom_in", -1]
+        command13 = ["smaller", "zoom_out", -1]
+        command14 = ["mute", "mute", -1]
         self.command_list.append(command1)
         self.command_list.append(command2)
         # self.command_list.append(command3)
@@ -33,6 +36,9 @@ class Checker(object):
         self.command_list.append(command9)
         self.command_list.append(command10)
         self.command_list.append(command11)
+        self.command_list.append(command12)
+        self.command_list.append(command13)
+        #self.command_list.append(command14)
 
         # for command in self.command_list:
         #     self.tree.add_command(command)
@@ -45,6 +51,7 @@ class Checker(object):
         else:
             #TODO: change to pop up
             print('Not valid command, skip')
+
     def validate_command(self, tokens):
         confident_command = []
         confidence = 0
@@ -155,7 +162,7 @@ def click():
 def move_click(x, y):
     pyautogui.click(x=x, y=y)
 
-def turn_up_volume():
+def turn_up_volume_mac():
     code, out, err = osascript.run("output volume of (get volume settings)")
     if not err:
         new_volume = int(out) + 10
@@ -165,7 +172,7 @@ def turn_up_volume():
     code, out, err = osascript.run("output volume of (get volume settings)")
     print(out)
 
-def turn_down_volume():
+def turn_down_volume_mac():
     code, out, err = osascript.run("output volume of (get volume settings)")
     if not err:
         new_volume = int(out) - 10
@@ -174,6 +181,15 @@ def turn_down_volume():
         osascript.run("set volume output volume {}".format(new_volume))
     code, out, err = osascript.run("output volume of (get volume settings)")
     print(out)
+
+def turn_up_volume_windows():
+    pyautogui.press('f3')
+
+def turn_down_volume_windows():
+    pyautogui.press('f2')
+
+def mute():
+    pyautogui.press('f1')
 
 def turn_up_brightness(value):
     code, out, err = osascript.run("tell application \"Terminal\" \nset currentTab to do script (\"brightness {}\") \n end tell".format(value))
@@ -203,7 +219,10 @@ def open_app(app):
         Proc = subprocess.Popen(['open', directory + app + '.app'])
     else:
         print('Not in available application')
-
+def zoom_in():
+    pyautogui.hotkey('ctrl', '+', interval=0.25)
+def zoom_out():
+    pyautogui.hotkey('ctrl', '-', interval=0.25)
 def add_new_tab():
     pyautogui.hotkey('ctrl', 't', interval=0.25)
 
