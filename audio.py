@@ -1,6 +1,7 @@
 import string
 import speech_recognition as sr
 import threading
+from fuzzywuzzy import fuzz
 
 def text_normalizer(text):
     text = text.upper()
@@ -47,11 +48,11 @@ class Audio(threading.Thread):
                 print(f"ASR hypothesis: {text}")
 
                 self.audio_queue.put(text)
-                if text == 'start':
+                if  fuzz.partial_ratio('start', text) >= 80:
                     audio_start_flag = True
                     self.audio_status_queue.put(True)
                     print('start, put into queue')
-                elif text == 'stop':
+                elif fuzz.partial_ratio('stop', text) >= 80:
                     audio_start_flag = False
                     self.audio_status_queue.put(False)
                     print('stop putting text into queue')
