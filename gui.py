@@ -201,7 +201,6 @@ class EyeudioGUI(Widget):
         elif self.event == "click_lip_btn":
             # Turn lip button off event
             if STATUS["lip_on"]:
-                initialize_lipreading_variables() # reinitialize the start lip vars (clear deque) before cropping
                 self.ids.lip_btn.text = "RECORD"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
                 STATUS["lip_on"] = False
@@ -216,8 +215,7 @@ class EyeudioGUI(Widget):
 
                     # Start Deep Lip Reading and save raw lip reading output
                     lip_sentence, lip_words = start_lip_reading()
-                    print("LIPREADING OUTPUT:::::")
-                    print(lip_sentence)
+                    print("Lipreading Output: ", lip_sentence)
                     LIP_QUEUE.put(lip_sentence)
                     self.current_lip_output = LIP_QUEUE.get()
 
@@ -231,8 +229,7 @@ class EyeudioGUI(Widget):
                 else:
                     # Start Deep Lip Reading and save raw lip reading output
                     lip_sentence, lip_words = start_lip_reading()
-                    print("LIPREADING OUTPUT:::::")
-                    print(lip_sentence)
+                    print("Lipreading Output: ", lip_sentence)
                     LIP_QUEUE.put(lip_sentence)
                     self.current_lip_output = LIP_QUEUE.get()
 
@@ -243,6 +240,7 @@ class EyeudioGUI(Widget):
 
             # Turn lip button on event
             else:
+                initialize_lipreading_variables() # reinitialize the start lip vars (clear deque) before cropping
                 self.ids.lip_btn.text = "STOP"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#ED4E33')
                 STATUS["lip_on"] = True
