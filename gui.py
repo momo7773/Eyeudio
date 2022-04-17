@@ -109,7 +109,7 @@ class EyeudioGUI(Widget):
         if (not AUDIO_STATUS_QUEUE.empty()):
             AUDIO_STATUS_QUEUE.get()
             self._update_button('click_audio_btn')
-        
+
 
     def _update_text(self, module_text, last_command, *args):
         if module_text.text.count('\n') > 10:
@@ -303,7 +303,7 @@ if __name__ == "__main__":
         "audio_on": False,
         "x": 0,
         "y": 0
-    }    
+    }
 
     COMMAND_QUEUE = Queue() # queue for syntax checked commands
     AUDIO_QUEUE = Queue() # speech recognition queue to be used for popup suggestion
@@ -371,7 +371,7 @@ if __name__ == "__main__":
                 continue
 
             array = np.array(face_eye.gaze_estimator.results)
-            # preprocesing: 
+            # preprocesing:
             arr = np.array(array)
             logical_arr = np.abs(arr - np.mean(arr, axis=0)) < np.std(arr, axis=0)
             filtered_arr = arr[logical_arr]

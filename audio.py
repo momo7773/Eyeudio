@@ -2,7 +2,7 @@ import string
 import speech_recognition as sr
 import threading
 from fuzzywuzzy import fuzz
-
+from gui import STATUS
 def text_normalizer(text):
     text = text.upper()
     return text.translate(str.maketrans('', '', string.punctuation))
@@ -15,10 +15,14 @@ class Audio(threading.Thread):
         self.checker = checker
         self.audio_status_queue = audio_status_q
         self.recognizer = sr.Recognizer()
+        schedule.every(1).seconds.do(interact_module, job)
 
         #self.initialize_audio()
 
         super().__init__(*args, **kwargs)
+
+    def interact_module():
+        audio_start_flag = STATUS['audio_on']
 
     def run(self):
         global audio_start_flag

@@ -20,11 +20,14 @@ class Checker(object):
         command7 = ["next tab", "next_tab", -1]
         command8 = ["open new window", "add_new_window", -1]
         command9 = ["open chrome", "open_chrome", -1]
-        command10 = ["open microsoft powerpoint", "open_app", 1]
-        command11 = ["open notion", "open_app", 1]
+        # command10 = ["open microsoft powerpoint", "open_app", 1]
+        # command11 = ["open notion", "open_app", 1]
         command12 = ["larger", "zoom_in", -1]
         command13 = ["smaller", "zoom_out", -1]
         command14 = ["mute", "mute", -1]
+        command15 = ["pause", "pause", -1]
+        command16 = ["resume", "resume", -1]
+
         self.command_list.append(command1)
         self.command_list.append(command2)
         # self.command_list.append(command3)
@@ -34,11 +37,13 @@ class Checker(object):
         self.command_list.append(command7)
         self.command_list.append(command8)
         self.command_list.append(command9)
-        self.command_list.append(command10)
-        self.command_list.append(command11)
+        # self.command_list.append(command10)
+        # self.command_list.append(command11)
         self.command_list.append(command12)
         self.command_list.append(command13)
         #self.command_list.append(command14)
+        self.command_list.append(command15)
+        self.command_list.append(command16)
 
         # for command in self.command_list:
         #     self.tree.add_command(command)
@@ -228,6 +233,12 @@ def add_new_tab():
 
 def add_new_window():
     pyautogui.hotkey('ctrl', 'n', interval=0.25)
+
+def pause():
+    pyautogui.press('space')
+
+def resume():
+    pyautogui.press('space')
 
 def next_tab():
     pyautogui.hotkey('ctrl', 'tab', interval=0.25)
