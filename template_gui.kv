@@ -121,8 +121,9 @@
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "(x:0, y:0)"
-                    font_size: 16
+                    id: cursor_location_label
+                    text: root.cursor_position
+                    font_size: 32
                     color: (0,0,0,1)
                 Button:
                     id: eye_btn

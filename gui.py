@@ -4,6 +4,7 @@ from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty
+from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -11,30 +12,34 @@ from kivy.uix.button import Button
 from kivy import utils
 from kivy.clock import Clock
 
-# import cv2
-# import argparse
-# import logging
-# import pathlib
-# import warnings
-# import torch
-# import numpy as np
-# import pyautogui
-# import atexit
+import cv2
+import argparse
+import logging
+import pathlib
+import warnings
+import torch
+import numpy as np
+import pyautogui
+import atexit
+import time
 
 from multiprocessing import Process, Queue
-# from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf
 from threading import Thread, Lock
 from time import sleep, ctime
+from collections import deque
+
+# EYEUDIO IMPORTS =============================================
 from audio import Audio
 from syntax_checker import Checker
 from lip_reading.start_lip_reading import start_lip_reading
-# from eyetracking.main import parse_args, load_mode_config
-# from eyetracking.demo import Demo
-# from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
-#                     download_ethxgaze_model, download_mpiifacegaze_model,
-#                     download_mpiigaze_model, expanduser_all,
-#                     generate_dummy_camera_params)
-
+from lip_reading.lip_preprocessing.record_and_crop_video import process_frame, initialize_lipreading_variables #lip_reading uncomment
+from eyetracking.main import parse_args, load_mode_config
+from eyetracking.demo import Demo
+from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
+                    download_ethxgaze_model, download_mpiifacegaze_model,
+                    download_mpiigaze_model, expanduser_all,
+                    generate_dummy_camera_params)
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -75,14 +80,19 @@ class EyeudioGUI(Widget):
             current_audio_output (str): the sentence recognized by speech recognition module
             selected_audio (bool): whether the user select the lip reading prediction or speech recognition prediction (in the "Do you mean..." popup)
     '''
+    cursor_position = StringProperty("X: 0 \nY: 0")
     def __init__(self, **kwargs):
         super(EyeudioGUI, self).__init__(**kwargs)
+        Clock.schedule_interval(self.update_cursor_position, 1) # every second
         Clock.schedule_interval(self._update_audio_status, 0.5)
         Clock.schedule_interval(self._update_log, 1)
 
         self.current_lip_output = ''
         self.current_audio_output = ''
         self.selected_audio = True
+
+    def update_cursor_position(self, dt):
+        self.cursor_position = "X: {:.0f}\nY: {:.0f}".format(status["x"], status["y"])
 
     def _open_info_popup(self, *args):
         '''
@@ -197,6 +207,7 @@ class EyeudioGUI(Widget):
 
             # Turn lip button on event
             else:
+                initialize_lipreading_variables() # reinitialize the start lip vars (clear deque) before cropping
                 self.ids.lip_btn.text = "ON"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex('#00A598')
                 STATUS["lip_on"] = True
@@ -286,182 +297,171 @@ if __name__ == "__main__":
         "eye_on": False,
         "lip_on": False,
         "audio_on": False
-    }
+        "x": 0,
+        "y": 0
+    }    
 
     COMMAND_QUEUE = Queue() # queue for syntax checked commands
-    AUDIO_QUEUE = Queue() # speech recognition queue
-    LIP_QUEUE = Queue() # lip reading queue
+    AUDIO_QUEUE = Queue() # speech recognition queue to be used for popup suggestion
+    LIP_QUEUE = Queue() # lip reading queue to be used for popup suggestion
     AUDIO_STATUS_QUEUE = Queue()
     CHECKER = Checker() # syntax checker for lip reading and speech recognition
+    lock = Lock() # eyetracker for priority
+    lip_reading_deque = deque(maxlen=4) # 4 is an arbitrary max number of raw frames to keep prior to cropping (which is slow)
 
-    def printOne():
-        global STATUS
+    # eyetracking task 1
+    def eye_tracker(args, lip_reading_deque):
+        global face_eye
+        lock.acquire()
+        config = load_mode_config(args)
+        expanduser_all(config)
+        if config.gaze_estimator.use_dummy_camera_params:
+            generate_dummy_camera_params(config)
+        OmegaConf.set_readonly(config, True)
+
+        if config.face_detector.mode == 'dlib':
+            download_dlib_pretrained_model()
+        if args.mode:
+            if config.mode == 'MPIIGaze':
+                download_mpiigaze_model()
+            elif config.mode == 'MPIIFaceGaze':
+                download_mpiifacegaze_model()
+            elif config.mode == 'ETH-XGaze':
+                download_ethxgaze_model()
+
+        check_path_all(config)
+        face_eye = Demo(config)
+        lock.release()
+        face_eye.run(lip_reading_deque)
+
+    # eyetracking task 2
+    def eye_cursor():
+        screenWidth, screenHeight = pyautogui.size() # Get the size of the primary monitor.
+        currentMouseX, currentMouseY = pyautogui.position()
+        sleep(1) # make sure work1 can get the lock first to init the face_eye
+        lock.acquire()
+        global face_eye
+        CALIBRATION_INTERVAL = 3 # change this interval
+        CURSOR_INTERVAL = 2
+        lock.release()
+
+        # first four results is used to calibration
+        x_right, x_left, y_up, y_down = 0, 0, 0, 0
+        # min     max     min     max
+
+
+        #sleep here, check the switch every half second.
+        global status
+        while status["eye_on"] is not True:
+            sleep(0.5)
+
+        iteration = 0
         while True:
-            if STATUS["eye_on"]:
-                print("Eye on")
-                sleep(1)
+            x = 0
+            y = 0
+            for res in face_eye.gaze_estimator.results:
+                x += res[0]
+                y += res[1]
+            if len(face_eye.gaze_estimator.results) == 0:
+                sleep(CURSOR_INTERVAL)
+                continue
 
-    def printTwo():
-        global STATUS
+            array = np.array(face_eye.gaze_estimator.results)
+            # preprocesing: 
+            arr = np.array(array)
+            logical_arr = np.abs(arr - np.mean(arr, axis=0)) < np.std(arr, axis=0)
+            filtered_arr = arr[logical_arr]
+            if len(filtered_arr) == 0:
+                sleep(CURSOR_INTERVAL)
+                continue
+            x /= -len(filtered_arr) # change sign (right should be larger than left)
+            y /= len(filtered_arr)
+
+            # calibration
+            if iteration == 0:
+                print("------------------- Look Upper-left -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            if iteration == 1: # upper-left
+                x_left += x
+                y_up += y
+                print("------------------- Then Look Upper-right -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 2: # upper-right
+                x_right += x
+                y_up += y
+                print("------------------- Then Look lower-right -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 3: # lower-right
+                x_right += x
+                y_down += y
+                print("------------------- Then Look lower-left -------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 4: # lower-left
+                x_left += x
+                y_down += y
+                print("-------------------------------------- Finished --------------------------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 5:
+                x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
+                print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
+
+            if status["eye_on"]:
+                # scale x and y
+                x = (x - x_left) / (x_right - x_left) * (screenWidth)
+                y = (y - y_up) / (y_down - y_up) * (screenHeight)
+                print("\n x:{}   y: {}".format(x, y))
+                status["x"] = x
+                status["y"] = y
+
+                if x <= 0:
+                    x = 1
+                if x >= screenWidth:
+                    x = screenWidth - 1
+                if y <= 0:
+                    y = 1
+                if y >= screenHeight:
+                    y = screenHeight - 1
+
+                pyautogui.moveTo(x, y) # x, y  positive number
+
+                sleep(CURSOR_INTERVAL)
+                iteration += 1
+
+    # lipreading task 1 (cropping)
+    def process_lip_frame_loop(lip_reading_deque):
         while True:
-            if STATUS["audio_on"]:
-                print("Audio on")
-                sleep(1)
-
-
-    lock = Lock()
-    queue = Queue() # eye tracking queue
-
-    # # eyetracking task 1
-    # def eye_tracker(args, queue):
-    #     global face_eye
-    #     lock.acquire()
-    #     config = load_mode_config(args)
-    #     expanduser_all(config)
-    #     if config.gaze_estimator.use_dummy_camera_params:
-    #         generate_dummy_camera_params(config)
-    #     OmegaConf.set_readonly(config, True)
-
-    #     if config.face_detector.mode == 'dlib':
-    #         download_dlib_pretrained_model()
-    #     if args.mode:
-    #         if config.mode == 'MPIIGaze':
-    #             download_mpiigaze_model()
-    #         elif config.mode == 'MPIIFaceGaze':
-    #             download_mpiifacegaze_model()
-    #         elif config.mode == 'ETH-XGaze':
-    #             download_ethxgaze_model()
-
-    #     check_path_all(config)
-    #     face_eye = Demo(config)
-    #     lock.release()
-    #     face_eye.run(queue)
-
-    # # eyetracking task 2
-    # def eye_cursor():
-    #     screenWidth, screenHeight = pyautogui.size() # Get the size of the primary monitor.
-    #     currentMouseX, currentMouseY = pyautogui.position()
-    #     sleep(1) # make sure work1 can get the lock first to init the face_eye
-    #     lock.acquire()
-    #     global face_eye
-    #     CALIBRATION_INTERVAL = 3 # change this interval
-    #     CURSOR_INTERVAL = 2
-    #     lock.release()
-
-    #     # first four results is used to calibration
-    #     x_right, x_left, y_up, y_down = 0, 0, 0, 0
-    #     # min     max     min     max
-
-
-    #     #sleep here, check the switch every half second.
-    #     global STATUS
-    #     while STATUS["eye_on"] is not True:
-    #         sleep(0.5)
-
-    #     iteration = 0
-    #     while True:
-    #         x = 0
-    #         y = 0
-    #         for res in face_eye.gaze_estimator.results:
-    #             x += res[0]
-    #             y += res[1]
-    #         array = np.array(face_eye.gaze_estimator.results)
-    #         # preprocesing: np.abs(data - np.mean(data, axis=0)) > np.std(data, axis=0) and only keep the all true ones
-    #         if len(face_eye.gaze_estimator.results) == 0:
-    #             sleep(CURSOR_INTERVAL)
-    #             continue
-    #         x /= -len(face_eye.gaze_estimator.results) # change sign (right should be larger than left)
-    #         y /= len(face_eye.gaze_estimator.results)
-
-
-    #         # calibration
-    #         if iteration == 0:
-    #             print("------------------- Look Upper-left -------------------")
-    #             sleep(CALIBRATION_INTERVAL)
-    #             iteration += 1
-    #             continue
-    #         if iteration == 1: # upper-left
-    #             x_left += x
-    #             y_up += y
-    #             print("------------------- Then Look Upper-right -------------------")
-    #             sleep(CALIBRATION_INTERVAL)
-    #             iteration += 1
-    #             continue
-    #         elif iteration == 2: # upper-right
-    #             x_right += x
-    #             y_up += y
-    #             print("------------------- Then Look lower-right -------------------")
-    #             sleep(CALIBRATION_INTERVAL)
-    #             iteration += 1
-    #             continue
-    #         elif iteration == 3: # lower-right
-    #             x_right += x
-    #             y_down += y
-    #             print("------------------- Then Look lower-left -------------------")
-    #             sleep(CALIBRATION_INTERVAL)
-    #             iteration += 1
-    #             continue
-    #         elif iteration == 4: # lower-left
-    #             x_left += x
-    #             y_down += y
-    #             print("-------------------------------------- Finished --------------------------------------")
-    #             sleep(CALIBRATION_INTERVAL)
-    #             iteration += 1
-    #             continue
-    #         elif iteration == 5:
-    #             x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
-    #             print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
-
-    #         if STATUS["eye_on"]:
-    #             # scale x and y
-    #             x = (x - x_left) / (x_right - x_left) * (screenWidth)
-    #             y = (y - y_up) / (y_down - y_up) * (screenHeight)
-    #             print("\n x:{}   y: {}".format(x, y))
-
-    #             if x <= 0:
-    #                 x = 1
-    #             if x >= screenWidth:
-    #                 x = screenWidth - 1
-    #             if y <= 0:
-    #                 y = 1
-    #             if y >= screenHeight:
-    #                 y = screenHeight - 1
-
-    #             pyautogui.moveTo(x, y) # x, y  positive number
-
-    #             sleep(CURSOR_INTERVAL)
-    #             iteration += 1
-
-    # # for lip-reading usage
-    # def show_stored_frame(queue):
-    #     while True:
-    #         if not queue.empty():
-    #             # 1. get a frame and it's sequential id.
-    #             frame, id = queue.get()
-    #             # 2. try to show it
-    #             cv2.imshow("current frame", frame)
-    #             key = cv2.waitKey(1)
-    #             if key == 27: #'q'
-    #                 cv2.destroyAllWindows()
+            # only process_frame if lipreading is on, and there exists a frame to process
+            if status["lip_on"] and (len(lip_reading_deque) > 0):
+                process_frame(lip_reading_deque)
+                # print("lip processing frame") # debugging
+            else:
+                time.sleep(0.2) # arbitrary time to wait if no frame to pop
 
     #### --- Speech Recognition --- ####
     audio = Audio(AUDIO_QUEUE, COMMAND_QUEUE, AUDIO_STATUS_QUEUE, CHECKER, None).start()
 
-    # ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
-    # #### --- Eye Tracking --- ####
-    # args = parse_args()
-    # task_eye_tracker = Thread(target=eye_tracker, args=(args,queue,))
-    # task_eye_tracker.start()
+    ### Please comment the eye tracking and lip reading related things if you thing the initialization is too long! ###
+    #### --- Eye Tracking --- ####
+    args = parse_args()
+    task_eye_tracker = Thread(target=eye_tracker, args=(args,lip_reading_deque,))
+    task_eye_tracker.start()
 
-    # task_eye_cursor = Thread(target=eye_cursor, args=())
-    # task_eye_cursor.start()
+    task_eye_cursor = Thread(target=eye_cursor, args=())
+    task_eye_cursor.start()
 
-    # #### --- Lip Reading --- ####
-    # ## To Jordan:
-    # # frames are stored a message queue
-    # # task_show_frame is an example
-    # task_show_frame = Thread(target=show_stored_frame, args=(queue,))
-    # task_show_frame.start()
+    #### --- Lip Reading --- ####
+    task_process_lip_frames = Thread(target=process_lip_frame_loop, args=(lip_reading_deque,))
+    task_process_lip_frames.start()
 
     app = Application()
     app.run()

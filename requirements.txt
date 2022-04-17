@@ -1,4 +1,4 @@
-# For GUI (Kivy)
+# For GUI (Kivy) ==============================================
 certifi==2021.10.8
 docutils==0.18
 idna==3.3
@@ -11,8 +11,24 @@ Kivy-Garden==0.1.4
 Pygments==2.10.0
 pypiwin32==223
 pywin32==302
+PyAutoGUI
 
-# For Deep Lip Reading
+# For mpiigaze and eye-tracking ===============================
+omegaconf
+dlib
+fvcore
+pandas
+pyyaml
+scipy
+tensorboardX
+torch
+torchvision
+yacs
+face-alignment
+mediapipe
+timm
+
+# For Deep Lip Reading ========================================
 absl-py==1.0.0
 astunparse==1.6.3
 av==8.1.0

@@ -1,6 +1,6 @@
 # (DEPRECATED)
 
-# How to run:
+# How to run (Windows):
 1. Install packages using conda
 conda env create -f environmentALL.yml
 
@@ -12,6 +12,9 @@ conda env list
 
 3. Run lip preprocessing
 python RecordVideoAndCrop.py
+
+# How to run (Mac):
+[Instructions](https://docs.google.com/document/d/1Wr_Pq5GcMtT3JYjCo5KyYcI4_3sZE7bqeZrEZnSiahQ/edit)
 
 # Commands to originally create the Anaconda package:
 conda create -n lip_env_3.7.7 python=3.7.7

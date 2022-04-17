@@ -1,4 +1,4 @@
-# Note: must be placed at same level as landmarks.dat
+# Note: must be placed at same level as landmarks.dat, unless you change predictor_path below
 
 # Credit: Jordan Wong jotywong@berkeley.edu
 # Credit: lip cropping largely based on code\lip_tracking\VisualizeLip.py 
@@ -13,42 +13,44 @@ import cv2 as cv
 import dlib
 import threading
 import copy
-
 import time
 
-# Mouth cropping changeable parameters ---------------------------
-max_frames_to_hold = 120 # max number of frames to keep track of
-output_dir = "lip_reading/lip_preprocessing/results" # output_dir is put through os.path.join
-predictor_path = 'lip_reading/lip_preprocessing/shape_predictor_68_face_landmarks.dat'
+# Mouth cropping changeable parameters ------------------------
+max_frames_to_hold = 120 # max number of processed frames to keep track of
+dirname = os.path.dirname(__file__) # to get path of predictor, relative to this file, regardless of imported or not
+predictor_path = os.path.join(dirname, './shape_predictor_68_face_landmarks.dat')
 font = cv.FONT_HERSHEY_SIMPLEX
 size_of_crops = 80
 
-# global variables
+# dlib requirements -------------------------------------------
+lip_detector = dlib.get_frontal_face_detector()
+lip_predictor = dlib.shape_predictor(predictor_path)
+
+# global variables --------------------------------------------
 g_exit_flag = 0 # for signaling to threads to exit
 g_frame_count = 0 # for labeling output cropped frames
 g_message_to_display = 'Starting...' # for updating the real time feed
 g_output_queue = deque(maxlen=max_frames_to_hold)
 
+def initialize_lipreading_variables():
+    global g_exit_flag, g_frame_count, g_output_queue
+    g_exit_flag = 0 # for signaling to threads to exit
+    g_frame_count = 0 # for labeling output cropped frames
+    g_output_queue.clear()
+
 class mouth_crop_thread (threading.Thread):
-   def __init__(self, threadID, name, workQueue, mouth_destination_path):
+   def __init__(self, threadID, name, workQueue):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.workQueue = workQueue
 
-        # dlib requirements ------------------------
-        self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor(predictor_path)
-        self.mouth_destination_path = mouth_destination_path
-
    def run(self):
         print("Starting " + self.name)
         while not g_exit_flag:
             if (len(self.workQueue) > 0):
-                frame = self.workQueue.popleft()
-
-                # crop and process frame
-                process_frame(frame, self.detector, self.predictor, self.mouth_destination_path)
+                # crop and process frame, process_frame() will popLeft a frame from deque
+                process_frame(self.workQueue)
 
                 global g_frame_count
                 print("%s processing frame %s" % (self.name, g_frame_count))
@@ -59,13 +61,16 @@ class mouth_crop_thread (threading.Thread):
 def get_copy_of_output_frames():
     return copy.deepcopy(g_output_queue)
 
-def process_frame(frame, detector, predictor, mouth_destination_path):
+def process_frame(lip_reading_deque):
     global g_frame_count, g_message_to_display, g_output_queue
+
+    # grab frame from deque
+    frame = lip_reading_deque.popleft()
     (h, w, _) = frame.shape
     
     # Detection of the frame
     frame.setflags(write=True)
-    detection = detector(frame, 1)
+    detection = lip_detector(frame, 1)
 
     # 20 mark for mouth
     marks = np.zeros((2, 20))
@@ -73,7 +78,7 @@ def process_frame(frame, detector, predictor, mouth_destination_path):
     # If the face is detected.
     if len(detection) > 0:
         # Shape of the face.
-        shape = predictor(frame, detection[0])
+        shape = lip_predictor(frame, detection[0])
 
         co = 0
         # Specific for the mouth.
@@ -134,9 +139,6 @@ def process_frame(frame, detector, predictor, mouth_destination_path):
             # Save the mouth area.
             mouth_gray = cv.cvtColor(mouth, cv.COLOR_RGB2GRAY)
 
-            # To a file
-            # cv.imwrite(mouth_destination_path + '/' + 'frame' + '_' + str(g_frame_count) + '.png', mouth_gray)
-
             # Or to our queue
             g_output_queue.append(mouth_gray)
 
@@ -145,21 +147,17 @@ def process_frame(frame, detector, predictor, mouth_destination_path):
                 g_frame_count = 0
 
             g_message_to_display = "The cropped mouth is detected ..."
-            print("The cropped mouth is detected ...")
+            # print("The cropped mouth is detected ...") # debugging
         else:
             g_message_to_display = "The full mouth is not detectable. ..."
-            print("The full mouth is not detectable. ...")
+            # print("The full mouth is not detectable. ...") # debugging
 
     else:
         g_message_to_display = "Mouth is not detectable. ..."
-        print("Mouth is not detectable. ...")
+        # print("Mouth is not detectable. ...") # debugging
 
 def record_and_crop():
-    # Make the output directory correct for the OS
-    mouth_destination_path = os.path.join(output_dir)
-    # Create directory if it doesn't already exist
-    if not os.path.exists(mouth_destination_path):
-        os.makedirs(mouth_destination_path)
+    initialize_lipreading_variables()
 
     # Init threads
     threadList = ["Thread-1"] # Can add threads by adding to this list
@@ -167,7 +165,7 @@ def record_and_crop():
     threads = []
     threadID = 1
     for tName in threadList:
-        thread = mouth_crop_thread(threadID, tName, workQueue, mouth_destination_path)
+        thread = mouth_crop_thread(threadID, tName, workQueue)
         thread.start()
         threads.append(thread)
         threadID += 1
@@ -207,7 +205,6 @@ def record_and_crop():
     cv.destroyAllWindows()
 
     # Notify threads it's time to exit
-    global g_exit_flag 
     g_exit_flag = 1
 
     # Wait for all threads to complete
