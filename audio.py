@@ -2,30 +2,33 @@ import string
 import speech_recognition as sr
 import threading
 from fuzzywuzzy import fuzz
-from gui import STATUS
+# from gui import STATUS
+
+
 def text_normalizer(text):
     text = text.upper()
     return text.translate(str.maketrans('', '', string.punctuation))
 
 class Audio(threading.Thread):
-    def __init__(self, audio_q, command_q, audio_status_q, checker, other_arg, *args, **kwargs):
+
+    audio_start_flag = False
+
+    def __init__(self, audio_q, command_q, audio_status_q, checker, *args, **kwargs):
         self.audio_queue = audio_q
         self.command_queue = command_q
-        self.other_arg = other_arg
         self.checker = checker
         self.audio_status_queue = audio_status_q
         self.recognizer = sr.Recognizer()
-        schedule.every(1).seconds.do(interact_module, job)
+        # schedule.every(1).seconds.do(interact_module, job)
 
         #self.initialize_audio()
 
         super().__init__(*args, **kwargs)
 
-    def interact_module():
-        audio_start_flag = STATUS['audio_on']
+    # def interact_module():
+    #     audio_start_flag = STATUS['audio_on']
 
     def run(self):
-        global audio_start_flag
         global first
         global app
         while True:
@@ -36,16 +39,7 @@ class Audio(threading.Thread):
             print('start recording')
             with sr.Microphone() as source:
                 myrecording = self.recognizer.listen(source, phrase_time_limit = seconds)
-            #myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=1)
-            #sd.wait()  # Wait until recording is finished
 
-            #write(audio, fs, myrecording)  # Save as WAV file
-
-            #speech, rate = librosa.load(audio, sr=16000)
-
-
-            #pysndfile.sndio.write('output_ds.wav', speech, rate=rate, format='wav', enc='pcm16') (Regular)
-            #soundfile.write('output_ds.wav', speech, rate) (M1)
             try:
                 text = self.recognizer.recognize_google(myrecording, language='en-IN')
                 #text, *_ = nbests[0]
@@ -53,17 +47,18 @@ class Audio(threading.Thread):
 
                 self.audio_queue.put(text)
                 if  fuzz.partial_ratio('start', text) >= 80:
-                    audio_start_flag = True
+                    Audio.audio_start_flag = True
                     self.audio_status_queue.put(True)
                     print('start, put into queue')
                 elif fuzz.partial_ratio('stop', text) >= 80:
-                    audio_start_flag = False
+                    Audio.audio_start_flag = False
                     self.audio_status_queue.put(False)
                     print('stop putting text into queue')
-                elif audio_start_flag:
-                    cmd = self.checker.execute_command(text)
-                    if cmd is not None:
-                        self.command_queue.put(cmd)
+                elif Audio.audio_start_flag:
+                    pass
+                    # cmd = self.checker.execute_command(text)
+                    # if cmd is not None:
+                    #     self.command_queue.put(cmd)
                 else:
                     print('audio flag is false, keep listening')
             except sr.UnknownValueError:
@@ -78,6 +73,5 @@ def combine_str(tokens):
     return result[:-1]
 
 command_list = []
-audio_start_flag = False
 first = True
 speech2text = None
