@@ -387,8 +387,8 @@ def eye_cursor():
     sleep(1) # make sure work1 can get the lock first to init the face_eye
     lock.acquire()
     global face_eye
-    CALIBRATION_INTERVAL = 3 # change this interval
-    CURSOR_INTERVAL = 2
+    CALIBRATION_INTERVAL = 4 # change this interval
+    CURSOR_INTERVAL = 1.5
     lock.release()
 
     # first four results is used to calibration
