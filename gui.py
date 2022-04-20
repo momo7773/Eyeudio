@@ -391,6 +391,7 @@ def eye_cursor():
     CURSOR_INTERVAL = 1.5
     lock.release()
 
+    # TODO: add a while loop so user can recalibrate
     # first four results is used to calibration
     x_right, x_left, y_up, y_down = 0, 0, 0, 0
     # min     max     min     max
@@ -425,6 +426,7 @@ def eye_cursor():
 
         # calibration
         if iteration == 0:
+            # TODO: add sound cues: https://pythonbasics.org/python-play-sound/
             print("------------------- Look Upper-left -------------------")
             sleep(CALIBRATION_INTERVAL)
             iteration += 1
