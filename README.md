@@ -55,6 +55,7 @@ python -m pip install tensorboardX
 python -m pip install yacs
 python -m pip install mediapipe
 python -m pip install timm
+python -m pip install playsound==1.2.2
 # pip install -r requirements.txt
 ```
 
