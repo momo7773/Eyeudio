@@ -31,7 +31,6 @@ python -m pip install moviepy==0.2.3.5
 python -m pip install opencv-python
 python -m pip install imageio-ffmpeg
 python -m pip install tensorflow_addons
-python -m pip install playsound
 
 # For Kivy (GUI)
 python -m pip install "kivy[base]" kivy_examples
@@ -56,6 +55,7 @@ python -m pip install tensorboardX
 python -m pip install yacs
 python -m pip install mediapipe
 python -m pip install timm
+python -m pip install playsound
 # pip install -r requirements.txt
 ```
 
