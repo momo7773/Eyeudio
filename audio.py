@@ -49,19 +49,23 @@ class Audio(threading.Thread):
                 if  fuzz.partial_ratio('start speech recognition', text) >= 80:
                     Audio.audio_start_flag = True
                     self.audio_status_queue.put({'audio': True})
-                    print('start, put into queue')
+                    print('start speech recognition, put into queue')
                 elif fuzz.partial_ratio('start lip reading', text) >= 80:
                     self.audio_status_queue.put({'lip_reading': True})
+                    print('start lip reading')
                 elif fuzz.partial_ratio('start eye tracking', text) >= 80:
                     self.audio_status_queue.put({'eye_tracking': True})
+                    print('start eye tracking')
                 elif fuzz.partial_ratio('stop speech recognition', text) >= 80:
                     Audio.audio_start_flag = False
                     self.audio_status_queue.put({'audio': False})
-                    print('stop putting text into queue')
+                    print('stop audio module, keep listening at background')
                 elif fuzz.partial_ratio('stop lip reading', text) >= 80:
                     self.audio_status_queue.put({'lip_reading': False})
+                    print('stop lip reading')
                 elif fuzz.partial_ratio('stop eye tracking', text) >= 80:
                     self.audio_status_queue.put({'eye_tracking': False})
+                    print('stop eye tracking')
                 elif Audio.audio_start_flag:
                     cmd = self.checker.execute_command(text)
                     if cmd is not None:
