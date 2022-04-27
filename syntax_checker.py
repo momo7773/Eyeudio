@@ -20,6 +20,8 @@ class Checker(object):
         command7 = ["next tab", "next_tab", -1]
         command8 = ["open new window", "add_new_window", -1]
         command9 = ["open chrome", "open_chrome", -1]
+        command10 = ["close chrome", "close_chrome", -1]
+        command11 = ["close tab", "close_tab", -1]
         # command10 = ["open microsoft powerpoint", "open_app", 1]
         # command11 = ["open notion", "open_app", 1]
         command12 = ["larger", "zoom_in", -1]
@@ -37,8 +39,8 @@ class Checker(object):
         self.command_list.append(command7)
         self.command_list.append(command8)
         self.command_list.append(command9)
-        # self.command_list.append(command10)
-        # self.command_list.append(command11)
+        self.command_list.append(command10)
+        self.command_list.append(command11)
         self.command_list.append(command12)
         self.command_list.append(command13)
         #self.command_list.append(command14)
@@ -242,5 +244,11 @@ def resume():
 
 def next_tab():
     pyautogui.hotkey('ctrl', 'tab', interval=0.25)
+
+def close_chrome():
+    pyautogui.hotkey('alt', 'f4', interval=0.25)
+
+def close_tab():
+    pyautogui.hotkey('ctrl', 'w', interval=0.25)
 
 application_mapping = {'chrome': 'Google Chrome','microsoft powerpoint': 'Microsoft PowerPoint', 'powerpoint': 'Microsoft PowerPoint', 'notion': 'Notion'}
