@@ -46,19 +46,26 @@ class Audio(threading.Thread):
                 print(f"ASR hypothesis: {text}")
 
                 self.audio_queue.put(text)
-                if  fuzz.partial_ratio('start', text) >= 80:
+                if  fuzz.partial_ratio('start speech recognition', text) >= 80:
                     Audio.audio_start_flag = True
-                    self.audio_status_queue.put(True)
+                    self.audio_status_queue.put({'audio': True})
                     print('start, put into queue')
-                elif fuzz.partial_ratio('stop', text) >= 80:
+                elif fuzz.partial_ratio('start lip reading', text) >= 80:
+                    self.audio_status_queue.put({'lip_reading': True})
+                elif fuzz.partial_ratio('start eye tracking', text) >= 80:
+                    self.audio_status_queue.put({'eye_tracking': True})
+                elif fuzz.partial_ratio('stop speech recognition', text) >= 80:
                     Audio.audio_start_flag = False
-                    self.audio_status_queue.put(False)
+                    self.audio_status_queue.put({'audio': False})
                     print('stop putting text into queue')
+                elif fuzz.partial_ratio('stop lip reading', text) >= 80:
+                    self.audio_status_queue.put({'lip_reading': False})
+                elif fuzz.partial_ratio('stop eye tracking', text) >= 80:
+                    self.audio_status_queue.put({'eye_tracking': False})
                 elif Audio.audio_start_flag:
-                    pass
-                    # cmd = self.checker.execute_command(text)
-                    # if cmd is not None:
-                    #     self.command_queue.put(cmd)
+                    cmd = self.checker.execute_command(text)
+                    if cmd is not None:
+                        self.command_queue.put(cmd)
                 else:
                     print('audio flag is false, keep listening')
             except sr.UnknownValueError:

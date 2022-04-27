@@ -115,9 +115,14 @@ class EyeudioGUI(Widget):
 
     def _update_audio_status(self, dt, *args):
         global AUDIO_STATUS_QUEUE
-        if not AUDIO_STATUS_QUEUE.empty():
-            AUDIO_STATUS_QUEUE.get()
-            self._update_button('click_audio_btn')
+        while not AUDIO_STATUS_QUEUE.empty():
+            status_dict = AUDIO_STATUS_QUEUE.get()
+            if 'audio' in status_dict:
+                self._update_button('click_audio_btn')
+            if 'eye_tracking' in status_dict:
+                self._update_button('click_eye_btn')
+            if 'lip_reading' in status_dict:
+                self._update_button('click_lip_btn')
 
     def _update_current_lip_output(self, dt, *args):
         global LIP_QUEUE
@@ -351,7 +356,7 @@ STATUS = {
 COMMAND_QUEUE = Queue() # queue for syntax checked commands
 AUDIO_QUEUE = Queue() # speech recognition queue to be used for popup suggestion
 LIP_QUEUE = Queue() # lip reading queue to be used for popup suggestion
-AUDIO_STATUS_QUEUE = Queue()
+GUI_STATUS_QUEUE = Queue()
 CHECKER = Checker() # syntax checker for lip reading and speech recognition
 lock = Lock() # eyetracker for priority
 lip_reading_deque = deque(maxlen=4) # 4 is an arbitrary max number of raw frames to keep prior to cropping (which is slow)
@@ -495,7 +500,7 @@ def eye_cursor():
                 break
 
 #### --- Speech Recognition --- ####
-AUDIO = Audio(audio_q=AUDIO_QUEUE, command_q=COMMAND_QUEUE, audio_status_q=AUDIO_STATUS_QUEUE, checker=CHECKER).start()
+AUDIO = Audio(audio_q=AUDIO_QUEUE, command_q=COMMAND_QUEUE, audio_status_q=GUI_STATUS_QUEUE, checker=CHECKER).start()
 
 #### --- Eye Tracking --- ####
 args = parse_args()
