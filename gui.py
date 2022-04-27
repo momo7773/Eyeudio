@@ -11,6 +11,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy import utils
 from kivy.clock import Clock
+from playsound import playsound
 
 import cv2
 import argparse
@@ -392,98 +393,106 @@ def eye_cursor():
     lock.release()
 
     # TODO: add a while loop so user can recalibrate
-    # first four results is used to calibration
-    x_right, x_left, y_up, y_down = 0, 0, 0, 0
-    # min     max     min     max
-
-
-    #sleep here, check the switch every half second.
-    global STATUS
-    while STATUS["eye_on"] is not True:
-        sleep(0.5)
-
-    iteration = 0
     while True:
-        x = 0
-        y = 0
-        for res in face_eye.gaze_estimator.results:
-            x += res[0]
-            y += res[1]
-        if len(face_eye.gaze_estimator.results) == 0:
-            sleep(CURSOR_INTERVAL)
-            continue
+        # first four results is used to calibration
+        x_right, x_left, y_up, y_down = 0, 0, 0, 0
+        # min     max     min     max
 
-        array = np.array(face_eye.gaze_estimator.results)
-        # preprocesing:
-        arr = np.array(array)
-        logical_arr = np.abs(arr - np.mean(arr, axis=0)) < np.std(arr, axis=0)
-        filtered_arr = arr[logical_arr]
-        if len(filtered_arr) == 0:
-            sleep(CURSOR_INTERVAL)
-            continue
-        x /= -len(filtered_arr) # change sign (right should be larger than left)
-        y /= len(filtered_arr)
 
-        # calibration
-        if iteration == 0:
-            # TODO: add sound cues: https://pythonbasics.org/python-play-sound/
-            print("------------------- Look Upper-left -------------------")
-            sleep(CALIBRATION_INTERVAL)
-            iteration += 1
-            continue
-        if iteration == 1: # upper-left
-            x_left += x
-            y_up += y
-            print("------------------- Then Look Upper-right -------------------")
-            sleep(CALIBRATION_INTERVAL)
-            iteration += 1
-            continue
-        elif iteration == 2: # upper-right
-            x_right += x
-            y_up += y
-            print("------------------- Then Look lower-right -------------------")
-            sleep(CALIBRATION_INTERVAL)
-            iteration += 1
-            continue
-        elif iteration == 3: # lower-right
-            x_right += x
-            y_down += y
-            print("------------------- Then Look lower-left -------------------")
-            sleep(CALIBRATION_INTERVAL)
-            iteration += 1
-            continue
-        elif iteration == 4: # lower-left
-            x_left += x
-            y_down += y
-            print("-------------------------------------- Finished --------------------------------------")
-            sleep(CALIBRATION_INTERVAL)
-            iteration += 1
-            continue
-        elif iteration == 5:
-            x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
-            print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
+        #sleep here, check the switch every half second.
+        global STATUS
+        while STATUS["eye_on"] is not True:
+            sleep(0.5)
 
-        if STATUS["eye_on"]:
-            # scale x and y
-            x = (x - x_left) / (x_right - x_left) * (screenWidth)
-            y = (y - y_up) / (y_down - y_up) * (screenHeight)
-            print("\n x:{}   y: {}".format(x, y))
-            STATUS["x"] = x
-            STATUS["y"] = y
+        iteration = 0
+        while True:
+            if iteration == 0:
+                playsound('.\\eyetracking\\calibration_start.mp3')
+            x = 0
+            y = 0
+            for res in face_eye.gaze_estimator.results:
+                x += res[0]
+                y += res[1]
+            if len(face_eye.gaze_estimator.results) == 0:
+                sleep(CURSOR_INTERVAL)
+                continue
 
-            if x <= 0:
-                x = 1
-            if x >= screenWidth:
-                x = screenWidth - 1
-            if y <= 0:
-                y = 1
-            if y >= screenHeight:
-                y = screenHeight - 1
+            array = np.array(face_eye.gaze_estimator.results)
+            # preprocesing:
+            arr = np.array(array)
+            logical_arr = np.abs(arr - np.mean(arr, axis=0)) < np.std(arr, axis=0)
+            filtered_arr = arr[logical_arr]
+            if len(filtered_arr) == 0:
+                sleep(CURSOR_INTERVAL)
+                continue
+            x /= -len(filtered_arr) # change sign (right should be larger than left)
+            y /= len(filtered_arr)
 
-            pyautogui.moveTo(x, y) # x, y  positive number
+            # calibration
+            if iteration == 0:
+                print("------------------- Look Upper-left -------------------")
+                playsound('.\\eyetracking\\upperleft.mp3')
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            if iteration == 1: # upper-left
+                x_left += x
+                y_up += y
+                print("------------------- Then Look Upper-right -------------------")
+                playsound('.\\eyetracking\\upperright.mp3')
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 2: # upper-right
+                x_right += x
+                y_up += y
+                print("------------------- Then Look lower-right -------------------")
+                playsound('.\\eyetracking\\lowerright.mp3')
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 3: # lower-right
+                x_right += x
+                y_down += y
+                print("------------------- Then Look lower-left -------------------")
+                playsound('.\\eyetracking\\lowerleft.mp3')
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 4: # lower-left
+                x_left += x
+                y_down += y
+                print("-------------------------------------- Finished --------------------------------------")
+                sleep(CALIBRATION_INTERVAL)
+                iteration += 1
+                continue
+            elif iteration == 5:
+                x_right, x_left, y_up, y_down = x_right / 2, x_left / 2, y_up / 2, y_down / 2
+                print("\nFinished calibration: \n x_right {}, \n x_left {}, \n y_up {}, \n y_down {}".format(x_right, x_left, y_up, y_down))
 
-            sleep(CURSOR_INTERVAL)
-            iteration += 1
+            if STATUS["eye_on"]:
+                # scale x and y
+                x = (x - x_left) / (x_right - x_left) * (screenWidth)
+                y = (y - y_up) / (y_down - y_up) * (screenHeight)
+                print("\n x:{}   y: {}".format(x, y))
+                STATUS["x"] = x
+                STATUS["y"] = y
+
+                if x <= 0:
+                    x = 1
+                if x >= screenWidth:
+                    x = screenWidth - 1
+                if y <= 0:
+                    y = 1
+                if y >= screenHeight:
+                    y = screenHeight - 1
+
+                pyautogui.moveTo(x, y) # x, y  positive number
+
+                sleep(CURSOR_INTERVAL)
+                iteration += 1
+            else:
+                break
 
 #### --- Speech Recognition --- ####
 AUDIO = Audio(audio_q=AUDIO_QUEUE, command_q=COMMAND_QUEUE, audio_status_q=AUDIO_STATUS_QUEUE, checker=CHECKER).start()
