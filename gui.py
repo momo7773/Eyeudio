@@ -114,9 +114,9 @@ class EyeudioGUI(Widget):
         info_popup.open()
 
     def _update_audio_status(self, dt, *args):
-        global AUDIO_STATUS_QUEUE
-        while not AUDIO_STATUS_QUEUE.empty():
-            status_dict = AUDIO_STATUS_QUEUE.get()
+        global GUI_STATUS_QUEUE
+        while not GUI_STATUS_QUEUE.empty():
+            status_dict = GUI_STATUS_QUEUE.get()
             if 'audio' in status_dict:
                 self._update_button('click_audio_btn')
             if 'eye_tracking' in status_dict:
