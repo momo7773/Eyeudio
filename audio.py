@@ -45,7 +45,6 @@ class Audio(threading.Thread):
                 #text, *_ = nbests[0]
                 print(f"ASR hypothesis: {text}")
 
-                self.audio_queue.put(text)
                 if  fuzz.partial_ratio('start speech recognition', text) >= 80:
                     Audio.audio_start_flag = True
                     self.audio_status_queue.put({'audio': True})
@@ -67,9 +66,10 @@ class Audio(threading.Thread):
                     self.audio_status_queue.put({'eye_tracking': False})
                     print('stop eye tracking')
                 elif Audio.audio_start_flag:
-                    cmd = self.checker.execute_command(text)
-                    if cmd is not None:
-                        self.command_queue.put(cmd)
+                    self.audio_queue.put(text)
+                    # cmd = self.checker.execute_command(text)
+                    # if cmd is not None:
+                    #     self.command_queue.put(cmd)
                 else:
                     print('audio flag is false, keep listening')
             except sr.UnknownValueError:
