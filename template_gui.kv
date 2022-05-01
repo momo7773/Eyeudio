@@ -1,12 +1,14 @@
 #:import utils kivy.utils
 #:import WrappedLabel gui
 
+#:set BLACK '#000000'
 #:set BLUE '#003262'
 #:set RED '#ED4E33'
 #:set GREEN '#00A598'
 #:set FOG '#DDD5C7'
 #:set GRAY '#EEEEEE'
 #:set YELLOW '#C4820E'
+#:set SCROLLBAR '#C1C1C1'
 
 <EyeudioGUI>
     BoxLayout:
@@ -32,7 +34,7 @@
                     Rectangle:
                         size: self.size
                         pos: self.pos
-                rows: 3 # Add more rows when adding widgets (Label, Button, etc.)
+                rows: 10 # Add more rows when adding widgets (Label, Button, etc.)
                 size_hint_x: None
                 width: 150
                 Label:
@@ -54,8 +56,96 @@
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    text: "Computer\nCamera\nMicrophone\nSpeaker"
-                    font_size: 16
+                    text: "System:"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 45
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    id: computer_info
+                    text: ""
+                    color: utils.get_color_from_hex(BLACK)
+                    font_size: 15
+                    size_hint_y: None
+                    height: 30
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "Camera:"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 45
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    id: camera_info
+                    text: ""
+                    color: utils.get_color_from_hex(BLACK)
+                    font_size: 15
+                    size_hint_y: None
+                    height: 30
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "Microphone:"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 45
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    id: microphone_info
+                    text: ""
+                    color: utils.get_color_from_hex(BLACK)
+                    font_size: 15
+                    size_hint_y: None
+                    height: 30
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    text: "Speaker:"
+                    font_size: 20
+                    size_hint_y: None
+                    height: 45
+                Label:
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex(YELLOW)
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                    id: speaker_info
+                    text: ""
+                    color: utils.get_color_from_hex(BLACK)
+                    font_size: 15
+                    size_hint_y: None
+                    height: 30
+
                 Button:
                     text: "More Info"
                     font_size: 16
@@ -202,18 +292,28 @@
                     color: utils.get_color_from_hex(BLUE)
                     size_hint_y: None
                     height: 60
-                WrappedLabel:
+                ScrollView:
+                    do_scroll_x: False
+                    do_scroll_y: True
+                    size: self.size
+                    bar_color: utils.get_color_from_hex(SCROLLBAR)
+                    bar_width: 12
                     canvas.before:
                         Color:
                             rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    id: lip_text
-                    text: ""
-                    halign: "center"
-                    font_size: 16
-                    color: (0,0,0,1)
+                    GridLayout:
+                        id: lip_text
+                        size_hint_y: None
+                        cols: 1
+                        height: self.minimum_height
+                        width: self.minimum_width
+                        row_default_height: '20dp'
+                        row_force_default: True
+                        spacing: 0, 0
+                        padding: 0, 0
                 Button:
                     id: lip_btn
                     background_normal: ''
@@ -283,18 +383,28 @@
                     color: utils.get_color_from_hex(BLUE)
                     size_hint_y: None
                     height: 60
-                WrappedLabel:
+                ScrollView:
+                    do_scroll_x: False
+                    do_scroll_y: True
+                    size: self.size
+                    bar_color: utils.get_color_from_hex(SCROLLBAR)
+                    bar_width: 12
                     canvas.before:
                         Color:
                             rgba: utils.get_color_from_hex(GRAY)
                         Rectangle:
                             size: self.size
                             pos: self.pos
-                    id: audio_text
-                    text: ""
-                    halign: "center"
-                    font_size: 16
-                    color: (0,0,0,1)
+                    GridLayout:
+                        id: audio_text
+                        size_hint_y: None
+                        cols: 1
+                        height: self.minimum_height
+                        width: self.minimum_width
+                        row_default_height: '20dp'
+                        row_force_default: True
+                        spacing: 0, 0
+                        padding: 0, 0
                 Button:
                     id: audio_btn
                     background_normal: ''

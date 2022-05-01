@@ -8,10 +8,14 @@ from kivy.properties import StringProperty
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
 from kivy import utils
 from kivy.clock import Clock
+from kivy.lang import Builder
 from playsound import playsound
+import platform
 
 import cv2
 import argparse
@@ -51,6 +55,8 @@ Window.size = (800, 500) # Window size (x, y)
 
 RED = '#ED4E33'
 GREEN = '#00A598'
+SCROLLBAR = '#C1C1C1'
+
 
 class WrappedLabel(Label):
     '''
@@ -94,6 +100,11 @@ class EyeudioGUI(Widget):
         Clock.schedule_interval(self._update_current_lip_output, 0.5)
         Clock.schedule_interval(self._update_current_audio_output, 0.5)
 
+        self.ids.computer_info.text = platform.system().upper()
+        self.ids.camera_info.text = "AVAILABLE"
+        self.ids.microphone_info.text = "AVAILABLE"
+        self.ids.speaker_info.text = "AVAILABLE"
+
         self.current_lip_output = ''
         self.current_audio_output = ''
         self.selected_audio = True
@@ -107,11 +118,73 @@ class EyeudioGUI(Widget):
         '''
             Open a popup when a user click on the "More Info" button
         '''
-        info_popup = Popup(title='Eyeudio Application Help', title_size=(30), title_align='center',
-                           content=WrappedLabel(text='Activate Speech Recognition: Say "Start Speech Recognition"\nActivate Lip Reading: Say "Start Lip Reading"\nActivate Eye Tracking: Say "Start Eye Tracking"\n',
-                                                font_size=14),
-                           size_hint=(None, None), size=(400, 400))
+        info_popup = Popup(title='Eyeudio Application Help', title_size=(30), title_align='center', size_hint=(None, None), size=(400, 400))
+
+        popup_content = {
+            "blank0"          : WrappedLabel(text='', font_size=20),
+            "help_start_title"  : WrappedLabel(text='Activate Assistive Technologies: ', bold=True, font_size=20, halign='center'),
+            "blank1.0"          : WrappedLabel(text='', font_size=13),
+            "help_start_audio"  : WrappedLabel(text='    \u2022  Speech Recognition: Say "Start Speech Recognition"', font_size=13, halign='left'),
+            "help_start_lip"    : WrappedLabel(text='    \u2022  Lip Reading: Say "Start Lip Reading"', font_size=13, halign='left'),
+            "help_start_eye"    : WrappedLabel(text='    \u2022  Eye Tracking: Say "Start Eye Tracking"', font_size=13, halign='left'),
+            "blank1.1"          : WrappedLabel(text='', font_size=20),
+            "help_stop_title"   : WrappedLabel(text='Deactivate Assistive Technologies: ', bold=True, font_size=20, halign='center'),
+            "blank2.0"          : WrappedLabel(text='', font_size=13),
+            "help_stop_audio"   : WrappedLabel(text='    \u2022  Speech Recognition: Say "Stop Speech Recognition"', font_size=13, halign='left'),
+            "help_stop_lip"     : WrappedLabel(text='    \u2022  Lip Reading: Say "Stop Lip Reading"', font_size=13, halign='left'),
+            "help_stop_eye"     : WrappedLabel(text='    \u2022  Eye Tracking: Say "Stop Eye Tracking"', font_size=13, halign='left'),
+            "blank2.1"          : WrappedLabel(text='', font_size=20),
+            "help_command_title": WrappedLabel(text='Supported Commands: ', bold=True, font_size=20, halign='center'),
+            "blank3.0"            : WrappedLabel(text='', font_size=13),
+            "help_commands"     : [
+                WrappedLabel(text="    \u2022  turn up volume", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  turn down volume", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  single click", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  open new tab", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  next tab", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  open new window", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  open chrome", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  close chrome", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  close tab", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  larger", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  smaller", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  mute", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  pause", font_size=13, halign='left'),
+                WrappedLabel(text="    \u2022  resume", font_size=13, halign='left'),
+            ],
+            "blank3.1"            : WrappedLabel(text='', font_size=20)
+        }
+
+        scroll_view = ScrollView(
+            do_scroll_x=False,
+            do_scroll_y=True,
+            size=(1000, info_popup.size[1]),
+            bar_color=utils.get_color_from_hex(SCROLLBAR),
+            bar_width=12
+        )
+
+        layout = GridLayout(
+            size_hint_y=None,
+            cols=1,
+            height=1000,
+            width=scroll_view.size[1],
+            row_default_height='20dp',
+            row_force_default=True,
+            spacing=(5, 5),
+            padding=(0, 0)
+        )
+
+        for label_name, label_content in popup_content.items():
+            if isinstance(label_content, list):
+                for sublabel in label_content:
+                    layout.add_widget(sublabel)
+            else:
+                layout.add_widget(label_content)
+
+        scroll_view.add_widget(layout)
+        info_popup.content = scroll_view
         info_popup.open()
+
 
     def _update_audio_status(self, dt, *args):
         global GUI_STATUS_QUEUE
@@ -137,16 +210,15 @@ class EyeudioGUI(Widget):
             self.select_audio_btn.text = self.current_audio_output
 
     def _update_text(self, module_text, last_command, *args):
-        if module_text.text.count('\n') > 10:
-            module_text.text = ''
-        module_text.text += f'\n{last_command}'
+        command_text = Label(text=last_command, halign="center", font_size=16, color=(0,0,0,1))
+        module_text.add_widget(command_text)
 
     def _update_log(self, dt, *args):
         global COMMAND_QUEUE, STATUS
         if not COMMAND_QUEUE.empty():
             last_command = COMMAND_QUEUE.get(block=False)
             print('command queue not empty, {}'.format(last_command))
-
+            # TODO: Double check the logic, might be incorrect.
             if STATUS["audio_on"] and not STATUS["lip_on"]:
                 self._update_text(module_text=self.ids.audio_text, last_command=last_command)
 
@@ -159,11 +231,34 @@ class EyeudioGUI(Widget):
                 else:
                     self._update_text(module_text=self.ids.lip_text, last_command=last_command)
 
+    def _open_please_wait_popup(self, *args):
+        '''
+            Open a popup telling the user to wait for lip reading to finish processing
+        '''
+        box = BoxLayout(orientation='vertical', padding=(10))
+        box.add_widget(Label(text="Lip reading in progress!", font_size=30))
+
+        self.please_wait_popup = Popup(title='Please wait!', title_size=(30), title_align='center', content=box, size_hint=(None, None), size=(400, 400))
+        self.please_wait_popup.open()
+
+        self.select_lip_btn_updater = Clock.schedule_interval(self._update_select_lip_btn, 0.5)
+
+    def _update_select_lip_btn(self, *args):
+        '''
+            Dismiss the Please Wait popup and open do you mean popup with the lip button 
+        '''
+        if self.current_lip_output:
+            self.please_wait_popup.dismiss()
+            self.select_lip_btn_updater.cancel()
+            self._open_do_you_mean_popup()
+
     def _open_do_you_mean_popup(self, *args):
         '''
             Open a popup to ask the user to select between speech recognition or lip reading output
         '''
         box = BoxLayout(orientation='vertical', padding=(10))
+        self.select_lip_btn = WrappedButton(text=self.current_lip_output, halign="center", font_size=20)
+        self.select_audio_btn = WrappedButton(text=self.current_audio_output, halign="center", font_size=20)
         box.add_widget(self.select_lip_btn)
         self.select_lip_btn.bind(on_release=self._select_lip)
 
@@ -185,7 +280,11 @@ class EyeudioGUI(Widget):
         if cmd is not None:
             COMMAND_QUEUE.put(cmd)
 
-        # Close popup
+        # Clear button content and close popup
+        self.current_lip_output = ''
+        self.current_audio_output = ''
+        self.select_lip_btn.text = ''
+        self.select_audio_btn.text = ''
         self.do_you_mean_popup.dismiss()
 
     def _select_audio(self, *args):
@@ -198,7 +297,11 @@ class EyeudioGUI(Widget):
         if cmd is not None:
             COMMAND_QUEUE.put(cmd)
 
-        # Close popup
+        # Clear button content and close popup
+        self.current_lip_output = ''
+        self.current_audio_output = ''
+        self.select_lip_btn.text = ''
+        self.select_audio_btn.text = ''
         self.do_you_mean_popup.dismiss()
 
     def _update_button(self, event, *args):
@@ -248,10 +351,7 @@ class EyeudioGUI(Widget):
 
                 # If speech recognition is already on, open popup to ask user to choose
                 if STATUS["audio_on"]:
-                    # while not self.current_lip_output or not self.current_audio_output:
-                    #     sleep(0.2)
-                    self.audio_command_queue_updater.cancel()
-                    self._open_do_you_mean_popup()
+                    self._open_please_wait_popup()
 
                 # If speech recognition is NOT already on, send output to syntax checker
                 else:
@@ -275,6 +375,10 @@ class EyeudioGUI(Widget):
                 self.ids.lip_btn.text = "STOP"
                 self.ids.lip_btn.background_color = utils.get_color_from_hex(RED)
 
+                # If speech recognition is already on, stop updating the audio command queue so that the command is not executed immediately
+                if STATUS["audio_on"]:
+                    self.audio_command_queue_updater.cancel()
+
                 # Change lip status to ON and start cropping thread
                 STATUS["lip_on"] = True
 
@@ -292,7 +396,7 @@ class EyeudioGUI(Widget):
                 Audio.audio_start_flag = False
 
                 self.current_audio_output = ''
-                self.audio_command_queue_updater.cancel()
+                # self.audio_command_queue_updater.cancel()
 
             # Turn audio button on event
             else:
@@ -336,6 +440,7 @@ class EyeudioGUI(Widget):
             cmd = CHECKER.execute_command(self.current_audio_output)
             if cmd is not None:
                 COMMAND_QUEUE.put(cmd)
+            self.audio_command_queue_updater.cancel()
             self.current_audio_output = ''
 
 
@@ -527,9 +632,12 @@ def recognize_lip_frame_loop():
     global STATUS, LIP_QUEUE
     while True:
         if STATUS["start_dlr"]:
-            lip_sentence, lip_words = start_lip_reading()
+            try:
+                lip_sentence, lip_words = start_lip_reading()
+                LIP_QUEUE.put(lip_sentence)
+            except:
+                lip_sentence, lip_words = '', ''
             print("Lipreading Output: ", lip_sentence)
-            LIP_QUEUE.put(lip_sentence)
             STATUS["start_dlr"] = False
         else:
             time.sleep(0.2) # arbitrary time to wait
