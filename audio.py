@@ -2,6 +2,9 @@ import string
 import speech_recognition as sr
 import threading
 from fuzzywuzzy import fuzz
+import time
+import math
+import struct
 # from gui import STATUS
 
 
@@ -10,7 +13,7 @@ def text_normalizer(text):
     return text.translate(str.maketrans('', '', string.punctuation))
 
 class Audio(threading.Thread):
-
+    background_noise_high = False
     audio_start_flag = False
 
     def __init__(self, audio_q, command_q, audio_status_q, checker, *args, **kwargs):
@@ -19,9 +22,10 @@ class Audio(threading.Thread):
         self.checker = checker
         self.audio_status_queue = audio_status_q
         self.recognizer = sr.Recognizer()
-        # schedule.every(1).seconds.do(interact_module, job)
-
-        #self.initialize_audio()
+        self.audioIndex = 0 
+        self.dbValsAvg = []
+        self.dbVals = [[]]
+        self.CHUNK = 1024
 
         super().__init__(*args, **kwargs)
 
@@ -39,6 +43,8 @@ class Audio(threading.Thread):
             print('start recording')
             with sr.Microphone() as source:
                 myrecording = self.recognizer.listen(source, phrase_time_limit = seconds)
+                self.calc_rms_val(myrecording.get_raw_data())
+                self.calc_average()
 
             try:
                 text = self.recognizer.recognize_google(myrecording, language='en-IN')
@@ -74,6 +80,28 @@ class Audio(threading.Thread):
                     print('audio flag is false, keep listening')
             except sr.UnknownValueError:
                 print('Wait')
+
+
+    def calc_rms_val(self, data):
+        end = time.time() + 0.1
+        while time.time() < end:
+            self.dbVals.append([])
+            count = len(data) / 2
+            format = "%dh" % (count)
+            sum_squares = 0.0
+            for sample in struct.unpack(format, data):
+                n = sample * (1.0 / 32768)
+                sum_squares += n ** 2
+            self.dbVals[self.audioIndex].append(20 * math.log10(math.sqrt(sum_squares / count)))
+
+    def calc_average(self):
+        self.dbValsAvg.append(sum(self.dbVals[self.audioIndex]) / len(self.dbVals[self.audioIndex]))
+        print("Audio Level: " + str(self.dbValsAvg[-1]))
+        if (self.dbValsAvg[-1] > -100): #and time.time() > Audio.resetTime + 60:
+            #self.reset = time.time()
+            Audio.background_noise_high = True
+            
+        self.audioIndex += 1
 
 
 def combine_str(tokens):

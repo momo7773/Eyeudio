@@ -16,6 +16,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from playsound import playsound
 import platform
+import time
 
 import cv2
 import argparse
@@ -37,14 +38,14 @@ from collections import deque
 # EYEUDIO IMPORTS =============================================
 from audio import Audio
 from syntax_checker import Checker
-from lip_reading.start_lip_reading import start_lip_reading
+'''from lip_reading.start_lip_reading import start_lip_reading
 from lip_reading.lip_preprocessing.record_and_crop_video import process_frame, initialize_lipreading_variables
 from eyetracking.main import parse_args, load_mode_config
 from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
                     download_ethxgaze_model, download_mpiifacegaze_model,
                     download_mpiigaze_model, expanduser_all,
-                    generate_dummy_camera_params)
+                    generate_dummy_camera_params)'''
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -99,6 +100,7 @@ class EyeudioGUI(Widget):
         Clock.schedule_interval(self._update_audio_status, 0.5)
         Clock.schedule_interval(self._update_current_lip_output, 0.5)
         Clock.schedule_interval(self._update_current_audio_output, 0.5)
+        Clock.schedule_interval(self._check_background_noise, 0.5)
 
         self.ids.computer_info.text = platform.system().upper()
         self.ids.camera_info.text = "AVAILABLE"
@@ -110,9 +112,31 @@ class EyeudioGUI(Widget):
         self.selected_audio = True
         self.select_lip_btn = WrappedButton(text=self.current_lip_output, halign="center", font_size=20)
         self.select_audio_btn = WrappedButton(text=self.current_audio_output, halign="center", font_size=20)
+        self.resetTime = -60
+
+
+    def _check_background_noise(self, dt):
+        if (Audio.background_noise_high):
+            print("too high")
+            Audio.background_noise_high = False
+            if (STATUS["audio_on"] and time.time() > self.resetTime + 60):
+                self._suggest_Input_Switch()
+                self.resetTime =  time.time()
+                #Audio.resetTime = time.time()
+
 
     def _update_cursor_position(self, dt):
         self.cursor_position = "X: {:.0f}\nY: {:.0f}".format(STATUS["x"], STATUS["y"])
+
+
+    def _suggest_Input_Switch(self):
+        
+            #Open a popup when the audio exceeds a limit, prompting the user to switch speech recognition -> lip reading
+        
+        pop = Popup(title = 'Suggest Activating Lip Input',
+                    content=WrappedLabel(text='The background audio level has exceeded the calibrated threshold for optimal speech recognition performace. Consider activating the lip-reading input.'),
+                    size_hint=(None, None), size= (500, 500))
+        pop.open()
 
     def _open_info_popup(self, *args):
         '''
@@ -608,12 +632,12 @@ def eye_cursor():
 AUDIO = Audio(audio_q=AUDIO_QUEUE, command_q=COMMAND_QUEUE, audio_status_q=GUI_STATUS_QUEUE, checker=CHECKER).start()
 
 #### --- Eye Tracking --- ####
-args = parse_args()
+'''args = parse_args()
 task_eye_tracker = Thread(target=eye_tracker, args=(args,lip_reading_deque,))
 task_eye_tracker.start()
 
 task_eye_cursor = Thread(target=eye_cursor, args=())
-task_eye_cursor.start()
+task_eye_cursor.start()'''
 
 #### --- Lip Reading --- ####
 # lipreading task 1 (cropping)
