@@ -38,14 +38,14 @@ from collections import deque
 # EYEUDIO IMPORTS =============================================
 from audio import Audio
 from syntax_checker import Checker
-'''from lip_reading.start_lip_reading import start_lip_reading
+from lip_reading.start_lip_reading import start_lip_reading
 from lip_reading.lip_preprocessing.record_and_crop_video import process_frame, initialize_lipreading_variables
 from eyetracking.main import parse_args, load_mode_config
 from eyetracking.demo import Demo
 from eyetracking.utils import (check_path_all, download_dlib_pretrained_model,
                     download_ethxgaze_model, download_mpiifacegaze_model,
                     download_mpiigaze_model, expanduser_all,
-                    generate_dummy_camera_params)'''
+                    generate_dummy_camera_params)
 
 # Load template file
 Builder.load_file('template_gui.kv')
@@ -632,12 +632,12 @@ def eye_cursor():
 AUDIO = Audio(audio_q=AUDIO_QUEUE, command_q=COMMAND_QUEUE, audio_status_q=GUI_STATUS_QUEUE, checker=CHECKER).start()
 
 #### --- Eye Tracking --- ####
-'''args = parse_args()
+args = parse_args()
 task_eye_tracker = Thread(target=eye_tracker, args=(args,lip_reading_deque,))
 task_eye_tracker.start()
 
 task_eye_cursor = Thread(target=eye_cursor, args=())
-task_eye_cursor.start()'''
+task_eye_cursor.start()
 
 #### --- Lip Reading --- ####
 # lipreading task 1 (cropping)
