@@ -97,7 +97,7 @@ class Audio(threading.Thread):
     def calc_average(self):
         self.dbValsAvg.append(sum(self.dbVals[self.audioIndex]) / len(self.dbVals[self.audioIndex]))
         print("Audio Level: " + str(self.dbValsAvg[-1]))
-        if (self.dbValsAvg[-1] > -100): #and time.time() > Audio.resetTime + 60:
+        if (self.dbValsAvg[-1] > -12): #and time.time() > Audio.resetTime + 60:
             #self.reset = time.time()
             Audio.background_noise_high = True
             
