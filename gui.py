@@ -16,7 +16,6 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from playsound import playsound
 import platform
-import time
 
 import cv2
 import argparse
@@ -100,7 +99,6 @@ class EyeudioGUI(Widget):
         Clock.schedule_interval(self._update_audio_status, 0.5)
         Clock.schedule_interval(self._update_current_lip_output, 0.5)
         Clock.schedule_interval(self._update_current_audio_output, 0.5)
-        Clock.schedule_interval(self._check_background_noise, 0.5)
 
         self.ids.computer_info.text = platform.system().upper()
         self.ids.camera_info.text = "AVAILABLE"
@@ -112,31 +110,9 @@ class EyeudioGUI(Widget):
         self.selected_audio = True
         self.select_lip_btn = WrappedButton(text=self.current_lip_output, halign="center", font_size=20)
         self.select_audio_btn = WrappedButton(text=self.current_audio_output, halign="center", font_size=20)
-        self.resetTime = -60
-
-
-    def _check_background_noise(self, dt):
-        if (Audio.background_noise_high):
-            print("too high")
-            Audio.background_noise_high = False
-            if (STATUS["audio_on"] and time.time() > self.resetTime + 60):
-                self._suggest_Input_Switch()
-                self.resetTime =  time.time()
-                #Audio.resetTime = time.time()
-
 
     def _update_cursor_position(self, dt):
         self.cursor_position = "X: {:.0f}\nY: {:.0f}".format(STATUS["x"], STATUS["y"])
-
-
-    def _suggest_Input_Switch(self):
-        
-            #Open a popup when the audio exceeds a limit, prompting the user to switch speech recognition -> lip reading
-        
-        pop = Popup(title = 'Suggest Activating Lip Input',
-                    content=WrappedLabel(text='The background audio level has exceeded the calibrated threshold for optimal speech recognition performace. Consider activating the lip-reading input.'),
-                    size_hint=(None, None), size= (500, 500))
-        pop.open()
 
     def _open_info_popup(self, *args):
         '''
